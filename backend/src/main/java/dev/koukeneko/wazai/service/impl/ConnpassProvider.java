@@ -1,5 +1,6 @@
 package dev.koukeneko.wazai.service.impl;
 
+import dev.koukeneko.wazai.dto.Coordinates;
 import dev.koukeneko.wazai.dto.WazaiEvent;
 import dev.koukeneko.wazai.dto.WazaiEvent.EventType;
 import dev.koukeneko.wazai.dto.WazaiMapItem;
@@ -30,8 +31,6 @@ public class ConnpassProvider implements ActivityProvider {
     private static final String BASE_URL = "https://connpass.com/api/v2";
     private static final String API_PATH = "/event/";
     private static final int DEFAULT_RESULT_COUNT = 10;
-    private static final double DEFAULT_LATITUDE = 0.0;
-    private static final double DEFAULT_LONGITUDE = 0.0;
 
     @Value("${connpass.api.token:}")
     private String apiToken;
@@ -86,8 +85,7 @@ public class ConnpassProvider implements ActivityProvider {
                 event.title(),
                 extractDescription(event),
                 event.event_url(),
-                DEFAULT_LATITUDE,  // TODO: Extract from event.address or event.place
-                DEFAULT_LONGITUDE, // TODO: Extract from event.address or event.place
+                Coordinates.tokyo(),  // TODO: Extract from event.address or event.place
                 parseStartTime(event.started_at()),
                 EventType.TECH_MEETUP,
                 DataSource.CONNPASS,

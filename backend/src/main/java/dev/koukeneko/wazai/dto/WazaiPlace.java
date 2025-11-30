@@ -4,7 +4,7 @@ package dev.koukeneko.wazai.dto;
  * Represents a static location/place that appears on the Wazai map.
  * Places are characterized by being permanently located at a specific address,
  * rather than being time-based events.
- *
+ * <p>
  * Examples: clinics, hospitals, cafes, coworking spaces, restaurants
  */
 public record WazaiPlace(
@@ -12,8 +12,7 @@ public record WazaiPlace(
         String title,
         String description,
         String url,
-        double latitude,
-        double longitude,
+        Coordinates coordinates,
         BusinessHours businessHours,
         PlaceType placeType,
         WazaiMapItem.DataSource source,
@@ -28,13 +27,12 @@ public record WazaiPlace(
             String title,
             String description,
             String url,
-            double latitude,
-            double longitude,
+            Coordinates coordinates,
             PlaceType placeType,
             WazaiMapItem.DataSource source,
             WazaiMapItem.Country country
     ) {
-        this(id, title, description, url, latitude, longitude, null, placeType, source, country);
+        this(id, title, description, url, coordinates, null, placeType, source, country);
     }
 
     /**
@@ -58,7 +56,7 @@ public record WazaiPlace(
      * - "24/7"
      * - "Weekdays 9am-6pm, Sat 10am-2pm"
      * - "By appointment only"
-     *
+     * <p>
      * For structured hour parsing, consider integrating with Google Places API
      * or implementing a dedicated BusinessHoursParser service.
      */

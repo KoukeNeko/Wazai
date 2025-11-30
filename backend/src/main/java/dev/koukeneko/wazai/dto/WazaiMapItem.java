@@ -13,8 +13,7 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
     String title();
     String description();
     String url();
-    double latitude();
-    double longitude();
+    Coordinates coordinates();
     DataSource source();
     Country country();
 

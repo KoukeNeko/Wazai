@@ -13,8 +13,7 @@ public record WazaiEvent(
         String title,
         String description,
         String url,
-        double latitude,
-        double longitude,
+        Coordinates coordinates,
         LocalDateTime startTime,
         LocalDateTime endTime,
         EventType eventType,
@@ -31,14 +30,13 @@ public record WazaiEvent(
             String title,
             String description,
             String url,
-            double latitude,
-            double longitude,
+            Coordinates coordinates,
             LocalDateTime startTime,
             EventType eventType,
             WazaiMapItem.DataSource source,
             WazaiMapItem.Country country
     ) {
-        this(id, title, description, url, latitude, longitude, startTime, null, eventType, source, country);
+        this(id, title, description, url, coordinates, startTime, null, eventType, source, country);
     }
 
     /**
