@@ -50,8 +50,9 @@ public class SearchController {
 
                     **Supported Keywords:**
                     - Technology: `python`, `javascript`, `java`, `security`, `開源`
-                    - Event Types: `conference`, `workshop`, `meetup`
-                    - Locations: `taiwan`, `taipei`, `kaohsiung`
+                    - Event Types: `conference`, `workshop`, `meetup`, `devfest`
+                    - Communities: `gdg`, `google`, `pycon`, `mopcon`, `coscup`
+                    - Locations: `taiwan`, `taipei`, `kaohsiung`, `taichung`, `hsinchu`
                     - Generic: `tech`, `活動`
 
                     **Returns:**

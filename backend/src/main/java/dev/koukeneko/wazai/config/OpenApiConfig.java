@@ -32,19 +32,15 @@ public class OpenApiConfig {
                         Wazai Platform REST API - Multi-source activity and location aggregation service.
 
                         ## Features
-                        - 🗺️ **Multi-source aggregation**: Connpass, Taiwan Tech Community, and more
+                        - 🗺️ **Multi-source aggregation**: Connpass, GDG Community, Taiwan Tech Community
                         - 🎯 **Dual data types**: Events (time-based) and Places (static locations)
                         - 🌏 **Geographic coverage**: Taiwan and Japan
                         - 🔍 **Smart search**: Bilingual keyword support (English + Chinese)
 
-                        ## Supported Events
-                        - PyCon Taiwan
-                        - MOPCON (Kaohsiung)
-                        - SITCON
-                        - HITCON
-                        - COSCUP
-                        - ModernWeb
-                        - And more...
+                        ## Data Sources
+                        - **GDG Community**: Google Developer Groups events (DevFest, Study Jams, Workshops)
+                        - **Taiwan Tech Community**: PyCon Taiwan, MOPCON, SITCON, HITCON, COSCUP, ModernWeb
+                        - **Connpass**: Japan tech community events
                         """)
                 .contact(new Contact()
                         .name("Wazai Team")

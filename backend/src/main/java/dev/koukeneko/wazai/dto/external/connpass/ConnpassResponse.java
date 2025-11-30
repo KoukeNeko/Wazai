@@ -1,4 +1,4 @@
-package dev.koukeneko.wazai.dto.external;
+package dev.koukeneko.wazai.dto.external.connpass;
 
 import java.util.List;
 
