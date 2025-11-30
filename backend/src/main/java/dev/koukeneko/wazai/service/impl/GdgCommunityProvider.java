@@ -14,6 +14,8 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import dev.koukeneko.wazai.util.SearchHelper;
+
 import static dev.koukeneko.wazai.dto.WazaiEvent.EventType;
 import static dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import static dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
@@ -54,7 +56,11 @@ public class GdgCommunityProvider implements ActivityProvider {
             return Collections.emptyList();
         }
 
-        return fetchGdgEvents();
+        List<WazaiMapItem> allEvents = fetchGdgEvents();
+        
+        return allEvents.stream()
+                .filter(item -> SearchHelper.matchesKeyword(item, keyword))
+                .collect(Collectors.toList());
     }
 
     @Override

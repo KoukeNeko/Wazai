@@ -18,6 +18,8 @@ import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import dev.koukeneko.wazai.util.SearchHelper;
+
 import static dev.koukeneko.wazai.dto.WazaiEvent.EventType;
 import static dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import static dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
@@ -25,7 +27,7 @@ import static dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
 /**
  * Provider for AWS events (Summit and Community Day).
  *
- * Integrates with AWS official events API to fetch upcoming AWS events worldwide.
+ * Integrates with the AWS official events API to fetch upcoming AWS events worldwide.
  * Supports two event types:
  * - AWS Summit: Large-scale official AWS conferences
  * - AWS Community Day: Community-organized AWS events
@@ -68,7 +70,10 @@ public class AwsSummitProvider implements ActivityProvider {
         List<WazaiMapItem> allEvents = new ArrayList<>();
         allEvents.addAll(fetchAwsSummitEvents());
         allEvents.addAll(fetchAwsCommunityDayEvents());
-        return allEvents;
+
+        return allEvents.stream()
+                .filter(item -> SearchHelper.matchesKeyword(item, keyword))
+                .collect(Collectors.toList());
     }
 
     @Override

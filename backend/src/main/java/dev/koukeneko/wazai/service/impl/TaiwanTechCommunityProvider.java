@@ -7,6 +7,7 @@ import dev.koukeneko.wazai.dto.WazaiMapItem;
 import dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
 import dev.koukeneko.wazai.service.ActivityProvider;
+import dev.koukeneko.wazai.util.SearchHelper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,28 +136,7 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
         }
 
         return cachedEvents.stream()
-                .filter(event -> matchesKeyword(event, keyword))
+                .filter(event -> SearchHelper.matchesKeyword(event, keyword))
                 .collect(Collectors.toList());
-    }
-
-    private boolean matchesKeyword(WazaiEvent event, String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-        
-        // Check title
-        if (event.title() != null && event.title().toLowerCase().contains(lowerKeyword)) {
-            return true;
-        }
-        
-        // Check description
-        if (event.description() != null && event.description().toLowerCase().contains(lowerKeyword)) {
-            return true;
-        }
-        
-        // Check ID (sometimes contains useful info like 'pycon')
-        if (event.id() != null && event.id().toLowerCase().contains(lowerKeyword)) {
-            return true;
-        }
-
-        return false;
     }
 }
