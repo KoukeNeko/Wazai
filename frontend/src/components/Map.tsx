@@ -168,6 +168,22 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
     if (event.title.toLowerCase().includes('sitcon') || event.id.toLowerCase().includes('sitcon')) {
       return '#77B55A'; // SITCON Green
     }
+    if (event.title.toLowerCase().includes('coscup') || event.id.toLowerCase().includes('coscup')) {
+      return '#3B9837'; // COSCUP Green
+    }
+    if (event.title.toLowerCase().includes('hitcon') || event.id.toLowerCase().includes('hitcon')) {
+      return '#1E1E1E'; // HITCON Dark
+    }
+    if (event.title.toLowerCase().includes('mopcon') || event.id.toLowerCase().includes('mopcon')) {
+      return '#060000'; // MOPCON Black
+    }
+    if (event.title.toLowerCase().includes('gdg') || event.id.toLowerCase().includes('gdg') || 
+        event.title.toLowerCase().includes('devfest') || event.source === 'GOOGLE_COMMUNITY') {
+      return '#1973E8'; // GDG Blue
+    }
+    if (event.title.toLowerCase().includes('agile') || event.id.toLowerCase().includes('agile')) {
+      return '#FE8938'; // Agile Summit Orange
+    }
     if (event.source === 'AWS_EVENTS') {
       return '#FF9900'; // AWS Orange
     }
