@@ -28,6 +28,7 @@ public record Coordinates(
 
     /**
      * Factory methods for Taiwan cities with GDG chapters.
+     * Total: 9 cities covering 29 GDG chapters
      */
     public static Coordinates taipei() {
         return new Coordinates(25.0330, 121.5654);
@@ -55,6 +56,17 @@ public record Coordinates(
 
     public static Coordinates newTaipei() {
         return new Coordinates(25.0122, 121.4654);
+    }
+
+    /**
+     * Factory method for international cities.
+     */
+    public static Coordinates hsinchu() {
+        return new Coordinates(24.8138, 120.9675);
+    }
+
+    public static Coordinates douliu() {
+        return new Coordinates(23.7117, 120.5434);
     }
 
     /**
