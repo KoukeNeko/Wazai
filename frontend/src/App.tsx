@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from 'react';
+import useSWR from 'swr';
+import { Sidebar } from '@/components/Sidebar';
+import { MapComponent } from '@/components/Map';
+import { DetailPanel } from '@/components/DetailPanel';
+import { searchEvents } from '@/services/api';
+import type { SearchParams, WazaiMapItem } from '@/types/api';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [searchParams, setSearchParams] = useState<SearchParams>({
+    keyword: '',
+    country: 'ALL',
+    provider: 'ALL'
+  });
+  const [selectedEvent, setSelectedEvent] = useState<WazaiMapItem | null>(null);
+
+  const { data: events = [], isLoading } = useSWR(
+    ['/api/search', searchParams], 
+    ([, params]) => searchEvents(params),
+    {
+      keepPreviousData: true,
+      revalidateOnFocus: false
+    }
+  );
+
+  const handleSearch = (params: SearchParams) => {
+    setSearchParams(params);
+    setSelectedEvent(null); // Clear selection on new search
+  };
+
+  const handleSelectEvent = (event: WazaiMapItem) => {
+    setSelectedEvent(event);
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="relative w-full h-screen overflow-hidden bg-zinc-50">
+      {/* Map Layer */}
+      <MapComponent 
+        events={events} 
+        selectedEvent={selectedEvent} 
+        onSelectEvent={handleSelectEvent} 
+      />
+
+      {/* Floating UI Layers */}
+      <Sidebar 
+        onSearch={handleSearch} 
+        results={events} 
+        onSelectEvent={handleSelectEvent}
+        selectedEventId={selectedEvent?.id}
+      />
+
+      <DetailPanel 
+        event={selectedEvent} 
+        onClose={() => setSelectedEvent(null)} 
+      />
+      
+      {/* Loading Indicator (optional, overlaid) */}
+      {isLoading && (
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-background/80 backdrop-blur px-4 py-2 rounded-full shadow-sm border text-sm">
+          Loading events...
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default App
+export default App;
