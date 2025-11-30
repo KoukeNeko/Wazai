@@ -1,7 +1,10 @@
 package dev.koukeneko.wazai.service.impl;
 
-import dev.koukeneko.wazai.dto.WazaiActivity;
-import dev.koukeneko.wazai.dto.WazaiActivity.ActivityType;
+import dev.koukeneko.wazai.dto.WazaiEvent;
+import dev.koukeneko.wazai.dto.WazaiEvent.EventType;
+import dev.koukeneko.wazai.dto.WazaiMapItem;
+import dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
+import dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import dev.koukeneko.wazai.service.ActivityProvider;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +23,9 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
     private static final String PROVIDER_NAME = "Taiwan Tech Community";
 
     @Override
-    public List<WazaiActivity> search(String keyword) {
+    public List<WazaiMapItem> search(String keyword) {
         // TODO: Replace with actual API call to Taiwan tech community platform
-        return createMockTaiwanActivities(keyword);
+        return createMockTaiwanEvents(keyword);
     }
 
     @Override
@@ -34,11 +37,11 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
      * Mock data generator for demonstration purposes.
      * Replace this with actual API integration.
      */
-    private List<WazaiActivity> createMockTaiwanActivities(String keyword) {
-        List<WazaiActivity> activities = new ArrayList<>();
+    private List<WazaiMapItem> createMockTaiwanEvents(String keyword) {
+        List<WazaiMapItem> events = new ArrayList<>();
 
         if (containsKeyword(keyword, "java", "程式", "coding")) {
-            activities.add(createActivity(
+            events.add(createEvent(
                     "tw-1",
                     "台北 Java 開發者聚會",
                     "每月定期聚會,討論 Spring Boot 與微服務架構",
@@ -50,7 +53,7 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
         }
 
         if (containsKeyword(keyword, "python", "AI", "機器學習")) {
-            activities.add(createActivity(
+            events.add(createEvent(
                     "tw-2",
                     "Python Taiwan 年會籌備會",
                     "討論 PyCon TW 2026 籌備事項",
@@ -61,10 +64,10 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
             ));
         }
 
-        return activities;
+        return events;
     }
 
-    private WazaiActivity createActivity(
+    private WazaiEvent createEvent(
             String id,
             String title,
             String description,
@@ -73,7 +76,7 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
             double longitude,
             LocalDateTime startTime
     ) {
-        return new WazaiActivity(
+        return new WazaiEvent(
                 id,
                 title,
                 description,
@@ -81,8 +84,9 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
                 latitude,
                 longitude,
                 startTime,
-                ActivityType.COMMUNITY,
-                PROVIDER_NAME
+                EventType.COMMUNITY_GATHERING,
+                DataSource.TAIWAN_TECH_COMMUNITY,
+                Country.TAIWAN
         );
     }
 

@@ -1,7 +1,10 @@
 package dev.koukeneko.wazai.service.impl;
 
-import dev.koukeneko.wazai.dto.WazaiActivity;
-import dev.koukeneko.wazai.dto.WazaiActivity.ActivityType;
+import dev.koukeneko.wazai.dto.WazaiEvent;
+import dev.koukeneko.wazai.dto.WazaiEvent.EventType;
+import dev.koukeneko.wazai.dto.WazaiMapItem;
+import dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
+import dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import dev.koukeneko.wazai.dto.external.ConnpassEvent;
 import dev.koukeneko.wazai.dto.external.ConnpassResponse;
 import dev.koukeneko.wazai.service.ActivityProvider;
@@ -40,14 +43,14 @@ public class ConnpassProvider implements ActivityProvider {
     }
 
     @Override
-    public List<WazaiActivity> search(String keyword) {
+    public List<WazaiMapItem> search(String keyword) {
         ConnpassResponse response = fetchConnpassEvents(keyword);
 
         if (isEmptyResponse(response)) {
             return Collections.emptyList();
         }
 
-        return transformToWazaiActivities(response.events());
+        return transformToWazaiEvents(response.events());
     }
 
     @Override
@@ -71,14 +74,14 @@ public class ConnpassProvider implements ActivityProvider {
         return response == null || response.events() == null || response.events().isEmpty();
     }
 
-    private List<WazaiActivity> transformToWazaiActivities(List<ConnpassEvent> events) {
+    private List<WazaiMapItem> transformToWazaiEvents(List<ConnpassEvent> events) {
         return events.stream()
-                .map(this::transformEvent)
+                .<WazaiMapItem>map(this::transformEvent)
                 .toList();
     }
 
-    private WazaiActivity transformEvent(ConnpassEvent event) {
-        return new WazaiActivity(
+    private WazaiEvent transformEvent(ConnpassEvent event) {
+        return new WazaiEvent(
                 generateActivityId(event.event_id()),
                 event.title(),
                 extractDescription(event),
@@ -86,8 +89,9 @@ public class ConnpassProvider implements ActivityProvider {
                 DEFAULT_LATITUDE,  // TODO: Extract from event.address or event.place
                 DEFAULT_LONGITUDE, // TODO: Extract from event.address or event.place
                 parseStartTime(event.started_at()),
-                ActivityType.TECH_EVENT,
-                PROVIDER_NAME
+                EventType.TECH_MEETUP,
+                DataSource.CONNPASS,
+                Country.JAPAN
         );
     }
 

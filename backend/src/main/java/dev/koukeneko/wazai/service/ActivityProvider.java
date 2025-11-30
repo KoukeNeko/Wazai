@@ -1,23 +1,26 @@
 package dev.koukeneko.wazai.service;
 
-import dev.koukeneko.wazai.dto.WazaiActivity;
+import dev.koukeneko.wazai.dto.WazaiMapItem;
 
 import java.util.List;
 
 /**
- * Interface defining the contract for all activity data providers.
- * Any service that provides activity data must implement this interface,
+ * Interface defining the contract for all map item data providers.
+ * Any service that provides map data (events, places, etc.) must implement this interface,
  * ensuring consistent behavior across different data sources.
+ *
+ * Providers can return either WazaiEvent (time-based activities) or WazaiPlace (static locations),
+ * both of which implement the WazaiMapItem sealed interface.
  */
 public interface ActivityProvider {
 
     /**
-     * Search for activities based on a keyword.
+     * Search for map items based on a keyword.
      *
      * @param keyword the search term
-     * @return a list of activities matching the keyword in WazaiActivity format
+     * @return a list of map items matching the keyword (can be events or places)
      */
-    List<WazaiActivity> search(String keyword);
+    List<WazaiMapItem> search(String keyword);
 
     /**
      * Get the name of this provider.
