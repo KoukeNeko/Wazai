@@ -12,6 +12,7 @@ export type WazaiDataSource =
   | 'TAIWAN_TECH_COMMUNITY' 
   | 'AWS_EVENTS' 
   | 'GOOGLE_COMMUNITY' 
+  | 'MEETUP'
   | 'UNKNOWN';
 
 export type WazaiCountry = 'TAIWAN' | 'JAPAN' | 'DEFAULT';

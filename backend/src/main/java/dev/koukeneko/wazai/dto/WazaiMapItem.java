@@ -18,16 +18,14 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
     Country country();
 
     /**
-     * Data source enumeration for identifying activity providers.
-     * Using enum ensures type safety and prevents invalid source values.
+     * Data source enumeration.
      */
-    enum DataSource {
-        CONNPASS,               // Connpass tech events platform
-        TAIWAN_TECH_COMMUNITY,  // Taiwan tech community events
-        GOOGLE_COMMUNITY,       // Google community platform
-        AWS_EVENTS,             // AWS Summit events
-        INTERNAL_DATABASE,      // Wazai's internal database
-        USER_SUBMITTED          // User-submitted items
+    public enum DataSource {
+        CONNPASS,
+        TAIWAN_TECH_COMMUNITY,
+        AWS_EVENTS,
+        GOOGLE_COMMUNITY,
+        MEETUP
     }
 
     /**
