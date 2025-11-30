@@ -2,41 +2,45 @@ package dev.koukeneko.wazai.dto.external.gdg;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 /**
- * External DTO for GDG Community event data.
- * This represents the raw event structure from gdg.community.dev.
- *
- * GDG Community uses Algolia search with dynamic loading,
- * so this structure may need adjustment based on actual API response.
+ * Event data from GDG Community API.
+ * Represents a single GDG event with its chapter and metadata.
+ * API Reference: https://gdg.community.dev/api/search/
  */
 public record GdgEvent(
-        @JsonProperty("event_id")
-        String eventId,
+        Long id,
 
         String title,
 
-        String description,
+        @JsonProperty("description_short")
+        String descriptionShort,
 
-        @JsonProperty("event_url")
-        String eventUrl,
+        GdgChapter chapter,
+
+        String city,
 
         @JsonProperty("start_date")
         String startDate,
 
-        @JsonProperty("end_date")
-        String endDate,
+        String url,
 
-        @JsonProperty("chapter_name")
-        String chapterName,
+        @JsonProperty("relative_url")
+        String relativeUrl,
 
-        @JsonProperty("chapter_location")
-        String chapterLocation,
+        @JsonProperty("video_url")
+        String videoUrl,
 
-        Double latitude,
+        @JsonProperty("event_type_title")
+        String eventTypeTitle,
 
-        Double longitude,
+        List<String> tags,
 
-        @JsonProperty("event_type")
-        String eventType
+        @JsonProperty("allows_cohosting")
+        Boolean allowsCohosting,
+
+        @JsonProperty("result_type")
+        String resultType
 ) {
 }

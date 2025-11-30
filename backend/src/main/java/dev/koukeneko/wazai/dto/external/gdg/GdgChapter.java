@@ -3,25 +3,36 @@ package dev.koukeneko.wazai.dto.external.gdg;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * External DTO for GDG Community chapter data.
- * Represents a local GDG chapter with its geographic information.
+ * Chapter information from GDG Community API.
+ * Represents a local GDG chapter with its geographic and organizational details.
  */
 public record GdgChapter(
-        @JsonProperty("chapter_id")
-        String chapterId,
+        Long id,
 
-        @JsonProperty("chapter_name")
-        String chapterName,
-
-        String country,
+        @JsonProperty("chapter_location")
+        String chapterLocation,
 
         String city,
 
-        Double latitude,
+        String country,
 
-        Double longitude,
+        @JsonProperty("country_name")
+        String countryName,
 
-        @JsonProperty("chapter_url")
-        String chapterUrl
+        String description,
+
+        @JsonProperty("hide_country_info")
+        Boolean hideCountryInfo,
+
+        String state,
+
+        String timezone,
+
+        String title,
+
+        @JsonProperty("relative_url")
+        String relativeUrl,
+
+        String url
 ) {
 }
