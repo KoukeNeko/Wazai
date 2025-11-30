@@ -34,6 +34,7 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
      */
     enum Country {
         JAPAN,                  // Japan
-        TAIWAN                  // Taiwan
+        TAIWAN,                  // Taiwan
+        DEFAULT
     }
 }

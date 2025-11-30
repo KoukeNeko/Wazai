@@ -143,8 +143,12 @@ public class GdgCommunityProvider implements ActivityProvider {
 
         return switch (city.toLowerCase()) {
             case "taipei" -> Coordinates.taipei();
+            case "new taipei" -> Coordinates.newTaipei();
             case "taichung" -> Coordinates.taichung();
             case "kaohsiung" -> Coordinates.kaohsiung();
+            case "tainan" -> Coordinates.tainan();
+            case "taoyuan" -> Coordinates.taoyuan();
+            case "changhua", "changhua city" -> Coordinates.changhua();
             case "tokyo" -> Coordinates.tokyo();
             default -> Coordinates.taipei();
         };
@@ -172,7 +176,7 @@ public class GdgCommunityProvider implements ActivityProvider {
         return switch (countryCode) {
             case "JP" -> Country.JAPAN;
             case "TW" -> Country.TAIWAN;
-            default -> Country.TAIWAN;
+            default -> Country.DEFAULT;
         };
     }
 }

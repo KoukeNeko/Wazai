@@ -27,7 +27,7 @@ public record Coordinates(
     }
 
     /**
-     * Factory method for common Taiwan locations.
+     * Factory methods for Taiwan cities with GDG chapters.
      */
     public static Coordinates taipei() {
         return new Coordinates(25.0330, 121.5654);
@@ -41,8 +41,24 @@ public record Coordinates(
         return new Coordinates(24.1477, 120.6736);
     }
 
+    public static Coordinates tainan() {
+        return new Coordinates(22.9999, 120.2269);
+    }
+
+    public static Coordinates taoyuan() {
+        return new Coordinates(24.9937, 121.3010);
+    }
+
+    public static Coordinates changhua() {
+        return new Coordinates(24.0518, 120.5161);
+    }
+
+    public static Coordinates newTaipei() {
+        return new Coordinates(25.0122, 121.4654);
+    }
+
     /**
-     * Factory method for Tokyo locations.
+     * Factory method for international cities.
      */
     public static Coordinates tokyo() {
         return new Coordinates(35.6812, 139.7671);
