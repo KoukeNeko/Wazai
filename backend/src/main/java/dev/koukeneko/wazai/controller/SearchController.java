@@ -55,6 +55,11 @@ public class SearchController {
                     - Locations: `taiwan`, `taipei`, `kaohsiung`, `taichung`, `hsinchu`
                     - Generic: `tech`, `活動`
 
+                    **Country Filtering:**
+                    - `ALL` (default): Returns events from all countries
+                    - `TW`: Returns only Taiwan events
+                    - `JP`: Returns only Japan events
+
                     **Returns:**
                     - Events with start/end times (conferences, meetups)
                     - Places with business hours (clinics, cafes)
@@ -91,7 +96,7 @@ public class SearchController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid search keyword"
+                    description = "Invalid search keyword or country code"
             )
     })
     public List<WazaiMapItem> searchMapItems(
@@ -100,9 +105,14 @@ public class SearchController {
                     example = "python",
                     required = true
             )
-            @RequestParam String keyword
+            @RequestParam String keyword,
+            @Parameter(
+                    description = "Country filter: TW (Taiwan), JP (Japan), or ALL (default)",
+                    example = "ALL"
+            )
+            @RequestParam(defaultValue = "ALL") String country
     ) {
-        return searchService.searchAll(keyword);
+        return searchService.searchAll(keyword, country);
     }
 
     /**

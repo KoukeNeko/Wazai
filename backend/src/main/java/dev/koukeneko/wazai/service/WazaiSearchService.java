@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static dev.koukeneko.wazai.dto.WazaiMapItem.Country;
+
 /**
  * Aggregator service that coordinates multiple map item providers.
  * This service acts as a facade, delegating search requests to all registered
@@ -37,10 +39,23 @@ public class WazaiSearchService {
      * @return unified list of map items (events and places) from all providers
      */
     public List<WazaiMapItem> searchAll(String keyword) {
-        return providers.stream()
+        return searchAll(keyword, "ALL");
+    }
+
+    /**
+     * Search all providers for map items matching the keyword and country filter.
+     *
+     * @param keyword the search term
+     * @param countryCode country filter: "TW", "JP", or "ALL"
+     * @return filtered list of map items matching the country criteria
+     */
+    public List<WazaiMapItem> searchAll(String keyword, String countryCode) {
+        List<WazaiMapItem> allResults = providers.stream()
                 .map(provider -> searchSingleProvider(provider, keyword))
                 .flatMap(List::stream)
                 .toList();
+
+        return filterByCountry(allResults, countryCode);
     }
 
     /**
@@ -62,5 +77,41 @@ public class WazaiSearchService {
             // TODO: Add proper logging
             return List.of();
         }
+    }
+
+    /**
+     * Filter map items by country code.
+     *
+     * @param items list of map items to filter
+     * @param countryCode country filter: "TW", "JP", or "ALL"
+     * @return filtered list
+     */
+    private List<WazaiMapItem> filterByCountry(List<WazaiMapItem> items, String countryCode) {
+        if (countryCode == null || countryCode.equalsIgnoreCase("ALL")) {
+            return items;
+        }
+
+        Country targetCountry = parseCountryCode(countryCode);
+        if (targetCountry == null) {
+            return items; // Invalid country code, return all
+        }
+
+        return items.stream()
+                .filter(item -> item.country() == targetCountry)
+                .toList();
+    }
+
+    /**
+     * Parse country code string to Country enum.
+     *
+     * @param countryCode "TW", "JP", etc.
+     * @return corresponding Country enum, or null if invalid
+     */
+    private Country parseCountryCode(String countryCode) {
+        return switch (countryCode.toUpperCase()) {
+            case "TW" -> Country.TAIWAN;
+            case "JP" -> Country.JAPAN;
+            default -> null;
+        };
     }
 }

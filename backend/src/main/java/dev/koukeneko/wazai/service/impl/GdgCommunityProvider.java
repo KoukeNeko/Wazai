@@ -35,11 +35,11 @@ public class GdgCommunityProvider implements ActivityProvider {
     private static final String API_BASE_URL = "https://gdg.community.dev/api";
     private static final String CHAPTER_REGION_ENDPOINT = "/chapter_region";
     private static final String SEARCH_ENDPOINT = "/search/";
-    private static final String TARGET_COUNTRY_CODE = "TW";
+    private static final List<String> TARGET_COUNTRY_CODES = List.of("TW", "JP");
     private static final int DEFAULT_PROXIMITY_KM = 10000;
 
     private final WebClient webClient;
-    private final Map<Long, GdgChapterInfo> taiwanChaptersCache = new HashMap<>();
+    private final Map<Long, GdgChapterInfo> chaptersCache = new HashMap<>();
 
     public GdgCommunityProvider(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
@@ -67,12 +67,12 @@ public class GdgCommunityProvider implements ActivityProvider {
     }
 
     /**
-     * Loads all Taiwan GDG chapters from chapter_region API.
-     * Filters by country code "TW" and caches the results.
+     * Loads all target country GDG chapters from chapter_region API.
+     * Filters by country codes (TW, JP) and caches the results.
      */
     private void loadTaiwanChapters() {
         try {
-            System.out.println("[GDG] Loading Taiwan chapters from API...");
+            System.out.println("[GDG] Loading GDG chapters from API...");
             List<GdgRegion> regions = webClient
                     .get()
                     .uri(uriBuilder -> uriBuilder
@@ -89,7 +89,16 @@ public class GdgCommunityProvider implements ActivityProvider {
             }
 
             filterAndCacheTaiwanChapters(regions);
-            System.out.println("[GDG] Loaded " + taiwanChaptersCache.size() + " Taiwan chapters");
+
+            long taiwanCount = chaptersCache.values().stream()
+                    .filter(c -> "TW".equalsIgnoreCase(c.country()))
+                    .count();
+            long japanCount = chaptersCache.values().stream()
+                    .filter(c -> "JP".equalsIgnoreCase(c.country()))
+                    .count();
+
+            System.out.println("[GDG] Loaded " + chaptersCache.size() + " chapters " +
+                    "(TW: " + taiwanCount + ", JP: " + japanCount + ")");
 
         } catch (Exception e) {
             System.err.println("[GDG] Failed to load chapters: " + e.getMessage());
@@ -104,16 +113,17 @@ public class GdgCommunityProvider implements ActivityProvider {
             }
 
             for (GdgChapterInfo chapter : region.chapters()) {
-                if (isTaiwanChapter(chapter)) {
-                    taiwanChaptersCache.put(chapter.id(), chapter);
+                if (isTargetChapter(chapter)) {
+                    chaptersCache.put(chapter.id(), chapter);
                 }
             }
         }
     }
 
-    private boolean isTaiwanChapter(GdgChapterInfo chapter) {
+    private boolean isTargetChapter(GdgChapterInfo chapter) {
         return chapter.country() != null
-                && chapter.country().equalsIgnoreCase(TARGET_COUNTRY_CODE)
+                && TARGET_COUNTRY_CODES.stream()
+                        .anyMatch(code -> code.equalsIgnoreCase(chapter.country()))
                 && chapter.active() != null
                 && chapter.active();
     }
@@ -155,7 +165,7 @@ public class GdgCommunityProvider implements ActivityProvider {
         if (event.chapter() == null || event.chapter().id() == null) {
             return false;
         }
-        return taiwanChaptersCache.containsKey(event.chapter().id());
+        return chaptersCache.containsKey(event.chapter().id());
     }
 
     private WazaiEvent transformToWazaiEvent(GdgEvent gdgEvent) {
@@ -170,7 +180,7 @@ public class GdgCommunityProvider implements ActivityProvider {
                     null,
                     EventType.COMMUNITY_GATHERING,
                     DataSource.GOOGLE_COMMUNITY,
-                    Country.TAIWAN
+                    determineCountry(gdgEvent)
             );
         } catch (Exception e) {
             return null;
@@ -198,7 +208,7 @@ public class GdgCommunityProvider implements ActivityProvider {
             return Coordinates.taipei();
         }
 
-        GdgChapterInfo chapterInfo = taiwanChaptersCache.get(event.chapter().id());
+        GdgChapterInfo chapterInfo = chaptersCache.get(event.chapter().id());
         if (chapterInfo == null
                 || chapterInfo.latitude() == null
                 || chapterInfo.longitude() == null) {
@@ -206,6 +216,23 @@ public class GdgCommunityProvider implements ActivityProvider {
         }
 
         return new Coordinates(chapterInfo.latitude(), chapterInfo.longitude());
+    }
+
+    private Country determineCountry(GdgEvent event) {
+        if (event.chapter() == null || event.chapter().id() == null) {
+            return Country.DEFAULT;
+        }
+
+        GdgChapterInfo chapterInfo = chaptersCache.get(event.chapter().id());
+        if (chapterInfo == null || chapterInfo.country() == null) {
+            return Country.DEFAULT;
+        }
+
+        return switch (chapterInfo.country().toUpperCase()) {
+            case "TW" -> Country.TAIWAN;
+            case "JP" -> Country.JAPAN;
+            default -> Country.DEFAULT;
+        };
     }
 
     private java.time.LocalDateTime parseStartTime(String startDateStr) {
