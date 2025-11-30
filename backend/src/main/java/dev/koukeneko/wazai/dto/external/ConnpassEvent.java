@@ -1,4 +1,4 @@
-package dev.koukeneko.wazai.dto;
+package dev.koukeneko.wazai.dto.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
