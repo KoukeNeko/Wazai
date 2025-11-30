@@ -59,6 +59,10 @@ public class SearchController {
                     - `ALL` (default): Returns events from all countries
                     - `TW`: Returns only Taiwan events
                     - `JP`: Returns only Japan events
+                    
+                    **Provider Filtering:**
+                    - `ALL` (default): Search all providers
+                    - Specific name (case-insensitive partial match): e.g., `connpass`, `taiwan`
 
                     **Returns:**
                     - Events with start/end times (conferences, meetups)
@@ -110,9 +114,14 @@ public class SearchController {
                     description = "Country filter: TW (Taiwan), JP (Japan), or ALL (default)",
                     example = "ALL"
             )
-            @RequestParam(defaultValue = "ALL") String country
+            @RequestParam(defaultValue = "ALL") String country,
+            @Parameter(
+                    description = "Provider filter: Partial match on provider name (e.g. 'Connpass'), or ALL (default)",
+                    example = "ALL"
+            )
+            @RequestParam(defaultValue = "ALL") String provider
     ) {
-        return searchService.searchAll(keyword, country);
+        return searchService.searchAll(keyword, country, provider);
     }
 
     /**

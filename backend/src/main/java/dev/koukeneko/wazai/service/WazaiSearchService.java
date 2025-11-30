@@ -39,7 +39,7 @@ public class WazaiSearchService {
      * @return unified list of map items (events and places) from all providers
      */
     public List<WazaiMapItem> searchAll(String keyword) {
-        return searchAll(keyword, "ALL");
+        return searchAll(keyword, "ALL", "ALL");
     }
 
     /**
@@ -50,12 +50,32 @@ public class WazaiSearchService {
      * @return filtered list of map items matching the country criteria
      */
     public List<WazaiMapItem> searchAll(String keyword, String countryCode) {
+        return searchAll(keyword, countryCode, "ALL");
+    }
+
+    /**
+     * Search providers for map items matching the keyword, country filter, and provider filter.
+     *
+     * @param keyword the search term
+     * @param countryCode country filter: "TW", "JP", or "ALL"
+     * @param providerName provider filter: partial match on provider name, or "ALL"
+     * @return filtered list of map items
+     */
+    public List<WazaiMapItem> searchAll(String keyword, String countryCode, String providerName) {
         List<WazaiMapItem> allResults = providers.stream()
+                .filter(p -> isProviderMatch(p, providerName))
                 .map(provider -> searchSingleProvider(provider, keyword))
                 .flatMap(List::stream)
                 .toList();
 
         return filterByCountry(allResults, countryCode);
+    }
+
+    private boolean isProviderMatch(ActivityProvider provider, String targetProviderName) {
+        if (targetProviderName == null || targetProviderName.isBlank() || targetProviderName.equalsIgnoreCase("ALL")) {
+            return true;
+        }
+        return provider.getProviderName().toLowerCase().contains(targetProviderName.toLowerCase());
     }
 
     /**
