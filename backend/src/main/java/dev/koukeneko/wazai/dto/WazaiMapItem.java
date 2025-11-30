@@ -25,6 +25,7 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
         CONNPASS,               // Connpass tech events platform
         TAIWAN_TECH_COMMUNITY,  // Taiwan tech community events
         GOOGLE_COMMUNITY,       // Google community platform
+        AWS_EVENTS,             // AWS Summit events
         INTERNAL_DATABASE,      // Wazai's internal database
         USER_SUBMITTED          // User-submitted items
     }

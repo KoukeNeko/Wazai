@@ -45,6 +45,7 @@ public record WazaiEvent(
     public enum EventType {
         TECH_MEETUP,            // Technology meetups and user groups
         CONFERENCE,             // Large-scale conferences
+        TECH_CONFERENCE,        // Tech-focused conferences (AWS Summit, Google I/O, etc.)
         WORKSHOP,               // Hands-on workshops
         COMMUNITY_GATHERING,    // General community events
         STUDY_GROUP,            // Reading groups and study sessions
