@@ -1,7 +1,8 @@
 package dev.koukeneko.wazai.dto.external.aws;
 
 /**
- * Additional fields for AWS Summit event containing detailed event information.
+ * Additional fields for AWS events containing detailed event information.
+ * Supports both AWS Summit and AWS Community Day events.
  */
 public record AwsAdditionalFields(
         String badge,
@@ -12,8 +13,9 @@ public record AwsAdditionalFields(
         String date,
         String durationMinutes,
         String heading,
+        String location,        // Community Day events
         String publishedDate,
-        String time,
+        String time,            // Summit events
         String title
 ) {
 }
