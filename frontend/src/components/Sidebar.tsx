@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { WazaiMapItem, SearchParams } from '@/types/api';
 import { getProviders } from '@/services/api';
+import { ModeToggle } from '@/components/mode-toggle';
 
 interface SidebarProps {
   onSearch: (params: SearchParams) => void;
@@ -39,11 +40,12 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
 
   return (
     <Card className="absolute left-4 top-4 bottom-4 w-96 z-10 flex flex-col shadow-xl bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-border/40">
-      <CardHeader className="pb-4">
+      <CardHeader className="pb-4 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
           <MapPin className="h-6 w-6 text-primary" />
           Wazai Maps
         </CardTitle>
+        <ModeToggle />
       </CardHeader>
       
       <CardContent className="space-y-4">
