@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Search, MapPin } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Search, MapPin, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,10 +23,22 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
   const [country, setCountry] = useState<'ALL' | 'TW' | 'JP'>('ALL');
   const [provider, setProvider] = useState('ALL');
   const [providerList, setProviderList] = useState<string[]>([]);
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
   useEffect(() => {
     getProviders().then(setProviderList).catch(console.error);
   }, []);
+
+  const sortedResults = useMemo(() => {
+    return [...results].sort((a, b) => {
+      // If no start time, put at the end for ascending sort, or at the beginning for descending?
+      // Usually items without date should be at the bottom regardless.
+      const dateA = a.startTime ? new Date(a.startTime).getTime() : (sortOrder === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
+      const dateB = b.startTime ? new Date(b.startTime).getTime() : (sortOrder === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
+      
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+  }, [results, sortOrder]);
 
   const handleSearch = () => {
     onSearch({ keyword, country, provider });
@@ -86,18 +98,31 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">{results.length} results</span>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-8 text-xs"
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? 'Earliest First' : 'Latest First'}
+            <ArrowUpDown className="h-3 w-3 ml-2" />
+          </Button>
+        </div>
       </CardContent>
 
       <Separator />
 
       <ScrollArea className="flex-1">
         <div className="p-4 space-y-3">
-          {results.length === 0 ? (
+          {sortedResults.length === 0 ? (
             <div className="text-center text-muted-foreground py-8">
               No events found. Try searching or changing filters.
             </div>
           ) : (
-            results.map((event) => (
+            sortedResults.map((event) => (
               <Card 
                 key={event.id} 
                 className={`cursor-pointer transition-all hover:bg-accent/50 ${selectedEventId === event.id ? 'border-primary bg-accent/50' : ''}`}
@@ -114,7 +139,7 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
                     {event.description}
                   </p>
                   <div className="text-xs text-muted-foreground flex gap-2 mt-2">
-                    <span>{new Date(event.startTime || '').toLocaleDateString()}</span>
+                    <span>{event.startTime ? new Date(event.startTime).toLocaleDateString() : 'No Date'}</span>
                     <span>•</span>
                     <span>{event.country}</span>
                   </div>

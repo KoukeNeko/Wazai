@@ -161,7 +161,11 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
       lat: selectedEvent.coordinates.latitude,
       lng: selectedEvent.coordinates.longitude,
     });
-    map.setZoom(15);
+    
+    const currentZoom = map.getZoom();
+    if (currentZoom !== undefined && currentZoom < 14) {
+      map.setZoom(15);
+    }
   }, [map, selectedEvent]);
 
   const getEventColor = (event: WazaiMapItem) => {
