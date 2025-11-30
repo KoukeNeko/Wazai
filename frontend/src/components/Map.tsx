@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { APIProvider, Map, Marker, useMap } from '@vis.gl/react-google-maps';
+import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps';
 import type { WazaiMapItem } from '@/types/api';
 import { useTheme } from '@/components/theme-provider';
+import { OverlayMarker } from '@/components/OverlayMarker';
 
 interface MapComponentProps {
   events: WazaiMapItem[];
@@ -163,15 +164,47 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
     map.setZoom(15);
   }, [map, selectedEvent]);
 
+  const getEventColor = (event: WazaiMapItem) => {
+    if (event.title.toLowerCase().includes('sitcon') || event.id.toLowerCase().includes('sitcon')) {
+      return '#77B55A'; // SITCON Green
+    }
+    return '#ef4444'; // Default Red (Tailwind red-500)
+  };
+
   return (
     <>
-      {events.map((event) => (
-        <Marker
-          key={event.id}
-          position={{ lat: event.coordinates.latitude, lng: event.coordinates.longitude }}
-          onClick={() => onSelectEvent(event)}
-        />
-      ))}
+      {events.map((event) => {
+        const isSelected = selectedEvent?.id === event.id;
+        const color = getEventColor(event);
+        
+        return (
+          <OverlayMarker
+            key={event.id}
+            position={{ lat: event.coordinates.latitude, lng: event.coordinates.longitude }}
+            zIndex={isSelected ? 100 : 1}
+          >
+            <div 
+              className="relative flex h-4 w-4 items-center justify-center cursor-pointer group"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent map click
+                onSelectEvent(event);
+              }}
+            >
+              {/* Ping animation */}
+              <span 
+                className="animate-ping-slow absolute inline-flex h-full w-full rounded-full opacity-75"
+                style={{ backgroundColor: color }}
+              ></span>
+              
+              {/* Inner dot */}
+              <span 
+                className={`relative inline-flex rounded-full h-3 w-3 border-2 border-white shadow-sm transition-transform duration-300 ${isSelected ? 'scale-150' : 'group-hover:scale-125'}`}
+                style={{ backgroundColor: color }}
+              ></span>
+            </div>
+          </OverlayMarker>
+        );
+      })}
     </>
   );
 }
