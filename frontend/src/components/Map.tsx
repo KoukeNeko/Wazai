@@ -168,6 +168,9 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
     if (event.title.toLowerCase().includes('sitcon') || event.id.toLowerCase().includes('sitcon')) {
       return '#77B55A'; // SITCON Green
     }
+    if (event.source === 'AWS_EVENTS') {
+      return '#FF9900'; // AWS Orange
+    }
     return '#ef4444'; // Default Red (Tailwind red-500)
   };
 
