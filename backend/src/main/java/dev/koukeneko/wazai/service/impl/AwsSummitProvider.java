@@ -63,13 +63,13 @@ public class AwsSummitProvider implements ActivityProvider {
 
     @Override
     public List<WazaiMapItem> search(String keyword) {
-        if (isEmptyKeyword(keyword)) {
-            return Collections.emptyList();
-        }
-
         List<WazaiMapItem> allEvents = new ArrayList<>();
         allEvents.addAll(fetchAwsSummitEvents());
         allEvents.addAll(fetchAwsCommunityDayEvents());
+
+        if (isEmptyKeyword(keyword)) {
+            return allEvents;
+        }
 
         return allEvents.stream()
                 .filter(item -> SearchHelper.matchesKeyword(item, keyword))

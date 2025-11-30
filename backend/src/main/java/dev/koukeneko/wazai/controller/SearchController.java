@@ -39,7 +39,7 @@ public class SearchController {
     /**
      * Search for map items (events and places) across all registered providers.
      *
-     * @param keyword the search term (required)
+     * @param keyword the search term (optional, returns all items if omitted)
      * @return list of map items from all providers in unified format
      */
     @GetMapping
@@ -47,6 +47,10 @@ public class SearchController {
             summary = "Search for events and places",
             description = """
                     Search across all registered providers for events and places matching the keyword.
+
+                    **Keyword:**
+                    - If provided: Filters results by the keyword (case-insensitive).
+                    - If omitted: Returns all available events/places from the providers.
 
                     **Supported Keywords:**
                     - Technology: `python`, `javascript`, `java`, `security`, `開源`
@@ -100,16 +104,16 @@ public class SearchController {
             ),
             @ApiResponse(
                     responseCode = "400",
-                    description = "Invalid search keyword or country code"
+                    description = "Invalid search parameters"
             )
     })
     public List<WazaiMapItem> searchMapItems(
             @Parameter(
-                    description = "Search keyword (supports English and Chinese)",
+                    description = "Search keyword (supports English and Chinese). If omitted, returns all items.",
                     example = "python",
-                    required = true
+                    required = false
             )
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @Parameter(
                     description = "Country filter: TW (Taiwan), JP (Japan), or ALL (default)",
                     example = "ALL"

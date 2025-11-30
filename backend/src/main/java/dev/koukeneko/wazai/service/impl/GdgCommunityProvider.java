@@ -52,11 +52,11 @@ public class GdgCommunityProvider implements ActivityProvider {
 
     @Override
     public List<WazaiMapItem> search(String keyword) {
-        if (isEmptyKeyword(keyword)) {
-            return Collections.emptyList();
-        }
-
         List<WazaiMapItem> allEvents = fetchGdgEvents();
+
+        if (isEmptyKeyword(keyword)) {
+            return allEvents;
+        }
         
         return allEvents.stream()
                 .filter(item -> SearchHelper.matchesKeyword(item, keyword))
