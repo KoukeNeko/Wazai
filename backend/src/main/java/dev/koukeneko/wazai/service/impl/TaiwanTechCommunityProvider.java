@@ -128,8 +128,7 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
      */
     private List<WazaiMapItem> searchTaiwanTechEvents(String keyword) {
         // If no keyword or generic search, return all events
-        boolean showAll = keyword == null || keyword.isBlank() ||
-                         containsKeyword(keyword, "台灣", "taiwan", "conference", "活動", "tech");
+        boolean showAll = keyword == null || keyword.isBlank();
 
         if (showAll) {
             return new ArrayList<>(cachedEvents);
@@ -158,20 +157,6 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
             return true;
         }
 
-        return false;
-    }
-
-    private boolean containsKeyword(String searchTerm, String... keywords) {
-        if (searchTerm == null) {
-            return false;
-        }
-
-        String lowerSearchTerm = searchTerm.toLowerCase();
-        for (String keyword : keywords) {
-            if (lowerSearchTerm.contains(keyword.toLowerCase())) {
-                return true;
-            }
-        }
         return false;
     }
 }
