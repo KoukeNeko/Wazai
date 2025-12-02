@@ -14,6 +14,7 @@ export type WazaiDataSource =
   | 'GOOGLE_COMMUNITY'
   | 'MEETUP'
   | 'TECHPLAY'
+  | 'DOORKEEPER'
   | 'UNKNOWN';
 
 export type WazaiCountry = 'TAIWAN' | 'JAPAN' | 'DEFAULT';
