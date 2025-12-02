@@ -7,12 +7,13 @@ export type WazaiEventType =
   | 'STUDY_GROUP' 
   | 'HACKATHON';
 
-export type WazaiDataSource = 
-  | 'CONNPASS' 
-  | 'TAIWAN_TECH_COMMUNITY' 
-  | 'AWS_EVENTS' 
-  | 'GOOGLE_COMMUNITY' 
+export type WazaiDataSource =
+  | 'CONNPASS'
+  | 'TAIWAN_TECH_COMMUNITY'
+  | 'AWS_EVENTS'
+  | 'GOOGLE_COMMUNITY'
   | 'MEETUP'
+  | 'TECHPLAY'
   | 'UNKNOWN';
 
 export type WazaiCountry = 'TAIWAN' | 'JAPAN' | 'DEFAULT';

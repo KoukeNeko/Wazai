@@ -191,6 +191,9 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
     if (event.source === 'AWS_EVENTS') {
       return '#FF9900'; // AWS Orange
     }
+    if (event.source === 'TECHPLAY') {
+      return '#062145'; // TechPlay Navy
+    }
     return '#ef4444'; // Default Red (Tailwind red-500)
   };
 

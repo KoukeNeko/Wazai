@@ -1,17 +1,15 @@
 package dev.koukeneko.wazai.dto.external.techplay;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 /**
  * Represents an event item from TechPlay RSS feed.
  *
- * TechPlay uses custom namespace "tp:" for event-specific fields:
- * - tp:eventDate: Event date (YYYY-MM-DD)
- * - tp:eventStartTime: Start timestamp
- * - tp:eventEndTime: End timestamp
- * - tp:eventPlace: Venue name
- * - tp:eventAddress: Full address
+ * TechPlay uses custom namespace "tp:" for event-specific fields.
+ * Jackson XML handles namespaced elements by local name when namespace-aware parsing is disabled.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record TechPlayItem(
         @JacksonXmlProperty(localName = "title")
         String title,
@@ -28,22 +26,22 @@ public record TechPlayItem(
         @JacksonXmlProperty(localName = "pubDate")
         String pubDate,
 
-        @JacksonXmlProperty(localName = "eventDate", namespace = "https://techplay.jp/")
+        @JacksonXmlProperty(localName = "eventDate")
         String eventDate,
 
-        @JacksonXmlProperty(localName = "eventStartTime", namespace = "https://techplay.jp/")
+        @JacksonXmlProperty(localName = "eventStartTime")
         String eventStartTime,
 
-        @JacksonXmlProperty(localName = "eventEndTime", namespace = "https://techplay.jp/")
+        @JacksonXmlProperty(localName = "eventEndTime")
         String eventEndTime,
 
-        @JacksonXmlProperty(localName = "eventPlace", namespace = "https://techplay.jp/")
+        @JacksonXmlProperty(localName = "eventPlace")
         String eventPlace,
 
-        @JacksonXmlProperty(localName = "eventAddress", namespace = "https://techplay.jp/")
+        @JacksonXmlProperty(localName = "eventAddress")
         String eventAddress,
 
-        @JacksonXmlProperty(localName = "creator", namespace = "http://purl.org/dc/elements/1.1/")
+        @JacksonXmlProperty(localName = "creator")
         String creator
 ) {
     /**
