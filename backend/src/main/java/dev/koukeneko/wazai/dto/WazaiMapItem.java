@@ -25,7 +25,8 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
         TAIWAN_TECH_COMMUNITY,
         AWS_EVENTS,
         GOOGLE_COMMUNITY,
-        MEETUP
+        MEETUP,
+        TECHPLAY
     }
 
     /**

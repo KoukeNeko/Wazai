@@ -110,7 +110,7 @@ public class ConnpassProvider implements ActivityProvider {
             description.append(event.place());
         }
         if (event.address() != null && !event.address().isBlank()) {
-            if (description.length() > 0) {
+            if (!description.isEmpty()) {
                 description.append(" - ");
             }
             description.append(event.address());
