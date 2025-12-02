@@ -1,0 +1,110 @@
+events:
+  - id: "sitcon-2026"
+    title: "SITCON 2026 學生計算機年會"
+    description: "學生計算機年會（Students' Information Technology Conference）以學生為本、由學生自發舉辦，長期投身學生資訊教育與推廣開源精神。2026 年主題「Jam the Chaos」，邀請對資訊技術有熱情的學生投稿分享創新想法、專案經驗與技術見解。"
+    url: "https://sitcon.org/2026/cfp/"
+    start: "2026-03-28T09:00:00"
+    end: "2026-03-28T17:00:00"
+    latitude: 25.0413
+    longitude: 121.6116
+    type: "CONFERENCE"
+    locationName: "中央研究院人文社會科學館"
+
+  - id: "pycon-tw-2026"
+    title: "PyCon Taiwan 2026"
+    description: "台灣最大的 Python 年會,涵蓋 AI、機器學習、資料科學等主題"
+    url: "https://tw.pycon.org"
+    start: "2026-09-04T09:00:00"
+    end: "2026-09-06T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "CONFERENCE"
+    locationName: "台北"
+
+  - id: "mopcon-2026"
+    title: "MOPCON 2026"
+    description: "南部最大行動應用開發者年會,聚焦 iOS、Android、跨平台開發"
+    url: "https://mopcon.org"
+    start: "2026-10-24T09:00:00"
+    end: "2026-10-25T18:00:00"
+    latitude: 22.6273
+    longitude: 120.3014
+    type: "CONFERENCE"
+    locationName: "高雄"
+
+  - id: "hitcon-2026"
+    title: "HITCON 2026"
+    description: "台灣駭客年會,亞洲最大資訊安全研討會"
+    url: "https://hitcon.org"
+    start: "2026-08-21T09:00:00"
+    end: "2026-08-22T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "CONFERENCE"
+    locationName: "台北"
+
+  - id: "coscup-2026"
+    title: "COSCUP 2026"
+    description: "開源人年會,推廣開源軟體文化的大型研討會"
+    url: "https://coscup.org"
+    start: "2026-08-01T09:00:00"
+    end: "2026-08-02T18:00:00"
+    latitude: 25.0174
+    longitude: 121.5405
+    type: "CONFERENCE"
+    locationName: "台北 (台科大)"
+
+  - id: "modernweb-2026"
+    title: "ModernWeb 2026"
+    description: "現代網頁技術研討會,專注於前後端最新技術趨勢"
+    url: "https://modernweb.tw"
+    start: "2026-07-18T09:00:00"
+    end: "2026-07-19T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "CONFERENCE"
+    locationName: "台北"
+
+  - id: "devopsdays-taipei-2026"
+    title: "DevOpsDays Taipei 2026"
+    description: "DevOps 實踐者交流大會,涵蓋 CI/CD、容器化、雲端架構"
+    url: "https://devopsdays.tw"
+    start: "2026-09-12T09:00:00"
+    end: "2026-09-13T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "CONFERENCE"
+    locationName: "台北"
+
+  - id: "jsdc-2026"
+    title: "JSDC 2026"
+    description: "JavaScript 開發者年會,全台最大 JS 技術盛會"
+    url: "https://jsdc.tw"
+    start: "2026-10-17T09:00:00"
+    end: "2026-10-18T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "CONFERENCE"
+    locationName: "台北"
+
+  - id: "gdg-devfest-taipei-2026"
+    title: "GDG DevFest Taipei 2026"
+    description: "Google 開發者社群年度盛會,探討 Google 最新技術"
+    url: "https://gdg.taipei"
+    start: "2026-11-14T09:00:00"
+    end: "2026-11-14T18:00:00"
+    latitude: 25.0330
+    longitude: 121.5654
+    type: "COMMUNITY_GATHERING"
+    locationName: "台北"
+
+  - id: "agile-summit-2026"
+    title: "Agile Summit 2026"
+    description: "敏捷開發年會,分享敏捷實踐經驗與團隊協作方法"
+    url: "https://agilesummit.tw"
+    start: "2026-06-27T09:00:00"
+    end: "2026-06-28T18:00:00"
+    latitude: 24.1477
+    longitude: 120.6736
+    type: "CONFERENCE"
+    locationName: "台中"
