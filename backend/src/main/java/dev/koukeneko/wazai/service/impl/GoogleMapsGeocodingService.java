@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +29,6 @@ import java.util.regex.Pattern;
 @ConditionalOnProperty(name = "google.maps.api.key", matchIfMissing = false)
 public class GoogleMapsGeocodingService implements GeocodingService {
 
-    private static final String API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
 
     // Japan geographic bounds for coordinate validation
@@ -40,11 +37,16 @@ public class GoogleMapsGeocodingService implements GeocodingService {
     private static final double JAPAN_MIN_LNG = 122.0;
     private static final double JAPAN_MAX_LNG = 154.0;
 
-    // Pattern to extract Japanese standard address format (都道府県 + 市区町村 + 町名 + 番地)
-    private static final Pattern JAPANESE_ADDRESS_PATTERN = Pattern.compile(
-            "(東京都|北海道|(?:京都|大阪)府|.{2,3}県)" +  // Prefecture
-            "(.+?[市区町村])" +                           // City/Ward/Town/Village
-            "(.+?(?:\\d+丁目\\d*番?\\d*号?|\\d+-\\d+(?:-\\d+)?|\\d+番地?\\d*号?))" // Full street address
+    // Pattern to extract Japanese address starting from prefecture
+    // Japanese address format: 都道府県 → 市区町村 → 町名 → 丁目/番地/号 → 建物名
+    private static final Pattern PREFECTURE_PATTERN = Pattern.compile(
+            "(東京都|北海道|(?:京都|大阪)府|.{2,3}県)(.+)"
+    );
+
+    // Pattern to extract city/ward for addresses without prefecture
+    // Matches: 区, 市, 町, 村
+    private static final Pattern CITY_WARD_PATTERN = Pattern.compile(
+            "(.+?[区市町村])(.+)"
     );
 
     private final WebClient webClient;
@@ -68,53 +70,18 @@ public class GoogleMapsGeocodingService implements GeocodingService {
             return Optional.empty();
         }
 
-        String normalizedAddress = normalizeAddress(address);
-        return geocodeCache.computeIfAbsent(normalizedAddress, this::fetchCoordinates);
+        // Just remove postal code, pass original address to Google Maps
+        String normalizedAddress = address.replaceAll("〒?\\d{3}-?\\d{4}\\s*", "").trim();
+        return geocodeCache.computeIfAbsent(normalizedAddress, addr -> fetchCoordinates(addr, address));
     }
 
-    private String normalizeAddress(String address) {
-        // First, try to extract the standard Japanese address format
-        String extractedAddress = extractJapaneseAddress(address);
-        if (extractedAddress != null) {
-            System.out.println("[GoogleMaps] Extracted address: " + extractedAddress);
-            return extractedAddress;
-        }
-
-        // Fallback: simple cleanup
-        return address
-                .replaceAll("〒\\d{3}-?\\d{4}\\s*", "")
-                .replaceAll("\\s+", " ")
-                .trim();
-    }
-
-    private String extractJapaneseAddress(String address) {
-        // Remove postal code first
-        String cleaned = address.replaceAll("〒\\d{3}-?\\d{4}\\s*", "");
-
-        Matcher matcher = JAPANESE_ADDRESS_PATTERN.matcher(cleaned);
-        if (matcher.find()) {
-            String prefecture = matcher.group(1);
-            String city = matcher.group(2);
-            String street = matcher.group(3);
-            return prefecture + city + street;
-        }
-        return null;
-    }
-
-    private Optional<Coordinates> fetchCoordinates(String address) {
+    private Optional<Coordinates> fetchCoordinates(String address, String originalAddress) {
         try {
             System.out.println("[GoogleMaps] Geocoding: " + address);
 
-            String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
-            // Use components=country:JP to restrict results to Japan only
-            String url = API_URL + "?address=" + encodedAddress
-                    + "&key=" + apiKey
-                    + "&language=ja"
-                    + "&region=jp"
-                    + "&components=country:JP";
-
             String response = webClient.get()
-                    .uri(url)
+                    .uri("https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={key}&language=ja&region=jp",
+                            address, apiKey)
                     .retrieve()
                     .bodyToMono(String.class)
                     .timeout(REQUEST_TIMEOUT)
@@ -124,7 +91,7 @@ public class GoogleMapsGeocodingService implements GeocodingService {
                 return Optional.empty();
             }
 
-            return parseResponse(response);
+            return parseResponse(response, originalAddress);
 
         } catch (Exception e) {
             System.err.println("[GoogleMaps] Error geocoding address '" + address + "': " + e.getMessage());
@@ -132,7 +99,7 @@ public class GoogleMapsGeocodingService implements GeocodingService {
         }
     }
 
-    private Optional<Coordinates> parseResponse(String response) {
+    private Optional<Coordinates> parseResponse(String response, String originalAddress) {
         try {
             JsonNode root = objectMapper.readTree(response);
             String status = root.get("status").asText();
@@ -148,7 +115,13 @@ public class GoogleMapsGeocodingService implements GeocodingService {
                 return Optional.empty();
             }
 
-            JsonNode location = results.get(0).get("geometry").get("location");
+            // Check formatted_address to verify result is actually in expected location
+            JsonNode firstResult = results.get(0);
+            String formattedAddress = firstResult.has("formatted_address")
+                    ? firstResult.get("formatted_address").asText()
+                    : "";
+
+            JsonNode location = firstResult.get("geometry").get("location");
             double latitude = location.get("lat").asDouble();
             double longitude = location.get("lng").asDouble();
 
@@ -158,7 +131,13 @@ public class GoogleMapsGeocodingService implements GeocodingService {
                 return Optional.empty();
             }
 
-            System.out.println("[GoogleMaps] Found: " + latitude + ", " + longitude);
+            // Verify the result matches expected location from original address
+            if (!verifyLocationMatch(originalAddress, formattedAddress)) {
+                System.out.println("[GoogleMaps] Location mismatch! Original: " + originalAddress + ", Got: " + formattedAddress);
+                return Optional.empty();
+            }
+
+            System.out.println("[GoogleMaps] Found: " + latitude + ", " + longitude + " (" + formattedAddress + ")");
             return Optional.of(new Coordinates(latitude, longitude));
 
         } catch (Exception e) {
@@ -170,5 +149,31 @@ public class GoogleMapsGeocodingService implements GeocodingService {
     private boolean isWithinJapanBounds(double latitude, double longitude) {
         return latitude >= JAPAN_MIN_LAT && latitude <= JAPAN_MAX_LAT
                 && longitude >= JAPAN_MIN_LNG && longitude <= JAPAN_MAX_LNG;
+    }
+
+    private boolean verifyLocationMatch(String originalAddress, String formattedAddress) {
+        // Try to verify by prefecture first
+        Matcher prefectureMatcher = PREFECTURE_PATTERN.matcher(originalAddress);
+        if (prefectureMatcher.find()) {
+            String expectedPrefecture = prefectureMatcher.group(1);
+            if (!formattedAddress.contains(expectedPrefecture)) {
+                return false;
+            }
+            return true;
+        }
+
+        // If no prefecture, try to verify by city/ward (区, 市, 町, 村)
+        Matcher cityWardMatcher = CITY_WARD_PATTERN.matcher(originalAddress);
+        if (cityWardMatcher.find()) {
+            String expectedCityWard = cityWardMatcher.group(1);
+            if (!formattedAddress.contains(expectedCityWard)) {
+                System.out.println("[GoogleMaps] City/ward mismatch! Expected: " + expectedCityWard + ", Got: " + formattedAddress);
+                return false;
+            }
+            return true;
+        }
+
+        // Can't verify, assume OK
+        return true;
     }
 }

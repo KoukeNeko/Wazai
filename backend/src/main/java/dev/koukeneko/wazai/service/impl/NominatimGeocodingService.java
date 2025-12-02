@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.koukeneko.wazai.dto.Coordinates;
 import dev.koukeneko.wazai.service.GeocodingService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see <a href="https://nominatim.org/release-docs/develop/api/Search/">Nominatim API</a>
  */
 @Service
+@ConditionalOnMissingBean(GeocodingService.class)
 public class NominatimGeocodingService implements GeocodingService {
 
     private static final String NOMINATIM_API_URL = "https://nominatim.openstreetmap.org/search";

@@ -195,7 +195,7 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
       return '#062145'; // TechPlay Navy
     }
     if (event.source === 'DOORKEEPER') {
-      return '#E91E63'; // Doorkeeper Pink
+      return '#124FF4'; // Doorkeeper Blue
     }
     return '#ef4444'; // Default Red (Tailwind red-500)
   };
