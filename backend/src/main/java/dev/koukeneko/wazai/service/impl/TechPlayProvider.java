@@ -293,7 +293,7 @@ public class TechPlayProvider implements ActivityProvider {
 
     /**
      * Maps Japanese addresses to coordinates.
-     * First tries local mapping, then falls back to Nominatim geocoding.
+     * First tries Nominatim for precise geocoding, then falls back to local mapping.
      */
     private Coordinates geocodeAddress(String address) {
         if (address == null || address.isBlank()) {
@@ -304,16 +304,20 @@ public class TechPlayProvider implements ActivityProvider {
             return Coordinates.tokyo();
         }
 
-        // Try local mapping first (fast, no API call)
+        // Try Nominatim first for precise geocoding
+        var nominatimResult = geocodingService.geocode(address);
+        if (nominatimResult.isPresent()) {
+            return nominatimResult.get();
+        }
+
+        // Fall back to local mapping (less precise, but reliable)
         for (Map.Entry<String, Coordinates> entry : JAPAN_AREA_COORDINATES.entrySet()) {
             if (address.contains(entry.getKey())) {
                 return entry.getValue();
             }
         }
 
-        // Fall back to Nominatim geocoding for unknown addresses
-        return geocodingService.geocode(address)
-                .orElse(Coordinates.tokyo());
+        return Coordinates.tokyo();
     }
 
     private String normalizeDescription(String text) {
