@@ -54,13 +54,18 @@ public class DoorkeeperProvider implements ActivityProvider {
             return Collections.emptyList();
         }
 
-        List<WazaiMapItem> allEvents = fetchFeaturedEvents();
-
         if (isEmptyKeyword(keyword)) {
-            return allEvents;
+            return fetchEvents(null);
         }
 
-        return allEvents.stream()
+        // First try API search, then filter locally for more results
+        List<WazaiMapItem> apiResults = fetchEvents(keyword);
+        if (!apiResults.isEmpty()) {
+            return apiResults;
+        }
+
+        // Fallback to local filtering if API search returns nothing
+        return fetchEvents(null).stream()
                 .filter(item -> SearchHelper.matchesKeyword(item, keyword))
                 .collect(Collectors.toList());
     }
@@ -78,12 +83,12 @@ public class DoorkeeperProvider implements ActivityProvider {
         return keyword == null || keyword.isBlank();
     }
 
-    private List<WazaiMapItem> fetchFeaturedEvents() {
+    private List<WazaiMapItem> fetchEvents(String keyword) {
         List<WazaiMapItem> allEvents = new ArrayList<>();
 
         for (int page = 1; page <= PAGES_TO_FETCH; page++) {
             try {
-                List<DoorkeeperEventWrapper> pageEvents = fetchEventsPage(page);
+                List<DoorkeeperEventWrapper> pageEvents = fetchEventsPage(page, keyword);
                 if (pageEvents == null || pageEvents.isEmpty()) {
                     break;
                 }
@@ -108,14 +113,19 @@ public class DoorkeeperProvider implements ActivityProvider {
         return allEvents;
     }
 
-    private List<DoorkeeperEventWrapper> fetchEventsPage(int page) {
+    private List<DoorkeeperEventWrapper> fetchEventsPage(int page, String keyword) {
         return restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/events")
-                        .queryParam("page", page)
-                        .queryParam("sort", "starts_at")
-                        .queryParam("locale", "ja")
-                        .build())
+                .uri(uriBuilder -> {
+                    uriBuilder
+                            .path("/events")
+                            .queryParam("page", page)
+                            .queryParam("sort", "published_at")
+                            .queryParam("locale", "ja");
+                    if (keyword != null && !keyword.isBlank()) {
+                        uriBuilder.queryParam("q", keyword);
+                    }
+                    return uriBuilder.build();
+                })
                 .header("Authorization", "Bearer " + apiToken)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
