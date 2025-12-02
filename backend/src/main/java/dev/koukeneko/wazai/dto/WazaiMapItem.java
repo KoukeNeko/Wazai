@@ -27,7 +27,8 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
         AWS_EVENTS,
         GOOGLE_COMMUNITY,
         MEETUP,
-        TECHPLAY
+        TECHPLAY,
+        DOORKEEPER
     }
 
     /**

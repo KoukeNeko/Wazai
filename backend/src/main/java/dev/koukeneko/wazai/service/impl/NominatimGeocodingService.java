@@ -71,14 +71,37 @@ public class NominatimGeocodingService implements GeocodingService {
             return result;
         }
 
-        // Try with "東京" suffix if not found
-        result = tryGeocode(address + " 東京");
-        if (result.isPresent()) {
-            return result;
+        // Try removing street number (番地) - e.g., "2-7-2" or "15-1"
+        String withoutStreetNumber = removeStreetNumber(address);
+        if (!withoutStreetNumber.equals(address)) {
+            result = tryGeocode(withoutStreetNumber);
+            if (result.isPresent()) {
+                return result;
+            }
         }
 
-        // Try with "日本" suffix
-        return tryGeocode(address + " 日本");
+        return Optional.empty();
+    }
+
+    /**
+     * Removes building names from address while keeping street numbers.
+     * Building names typically come after the street address.
+     */
+    private String removeStreetNumber(String address) {
+        return address
+                // Remove building floor info like "6F", "B1F", "18階"
+                .replaceAll("\\s*B?\\d+F\\s*", " ")
+                .replaceAll("\\s*\\d+階.*$", "")
+                // Remove building names (typically after street number)
+                .replaceAll("\\s+[A-Za-z][A-Za-z0-9]*[^\\d\\s].*$", "")  // Names starting with alphabet
+                .replaceAll("\\s+.*ビル.*$", "")
+                .replaceAll("\\s+.*タワー.*$", "")
+                .replaceAll("\\s+.*センター.*$", "")
+                .replaceAll("\\s+.*会館.*$", "")
+                .replaceAll("\\s+.*ホール.*$", "")
+                // Clean up extra spaces
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private Optional<Coordinates> tryGeocode(String address) {
