@@ -16,6 +16,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Geocoding service using Google Maps Geocoding API.
@@ -31,6 +33,19 @@ public class GoogleMapsGeocodingService implements GeocodingService {
 
     private static final String API_URL = "https://maps.googleapis.com/maps/api/geocode/json";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
+
+    // Japan geographic bounds for coordinate validation
+    private static final double JAPAN_MIN_LAT = 24.0;
+    private static final double JAPAN_MAX_LAT = 46.0;
+    private static final double JAPAN_MIN_LNG = 122.0;
+    private static final double JAPAN_MAX_LNG = 154.0;
+
+    // Pattern to extract Japanese standard address format (都道府県 + 市区町村 + 町名 + 番地)
+    private static final Pattern JAPANESE_ADDRESS_PATTERN = Pattern.compile(
+            "(東京都|北海道|(?:京都|大阪)府|.{2,3}県)" +  // Prefecture
+            "(.+?[市区町村])" +                           // City/Ward/Town/Village
+            "(.+?(?:\\d+丁目\\d*番?\\d*号?|\\d+-\\d+(?:-\\d+)?|\\d+番地?\\d*号?))" // Full street address
+    );
 
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -58,12 +73,32 @@ public class GoogleMapsGeocodingService implements GeocodingService {
     }
 
     private String normalizeAddress(String address) {
+        // First, try to extract the standard Japanese address format
+        String extractedAddress = extractJapaneseAddress(address);
+        if (extractedAddress != null) {
+            System.out.println("[GoogleMaps] Extracted address: " + extractedAddress);
+            return extractedAddress;
+        }
+
+        // Fallback: simple cleanup
         return address
-                // Remove postal code patterns
                 .replaceAll("〒\\d{3}-?\\d{4}\\s*", "")
-                // Clean up extra spaces
                 .replaceAll("\\s+", " ")
                 .trim();
+    }
+
+    private String extractJapaneseAddress(String address) {
+        // Remove postal code first
+        String cleaned = address.replaceAll("〒\\d{3}-?\\d{4}\\s*", "");
+
+        Matcher matcher = JAPANESE_ADDRESS_PATTERN.matcher(cleaned);
+        if (matcher.find()) {
+            String prefecture = matcher.group(1);
+            String city = matcher.group(2);
+            String street = matcher.group(3);
+            return prefecture + city + street;
+        }
+        return null;
     }
 
     private Optional<Coordinates> fetchCoordinates(String address) {
@@ -71,7 +106,12 @@ public class GoogleMapsGeocodingService implements GeocodingService {
             System.out.println("[GoogleMaps] Geocoding: " + address);
 
             String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
-            String url = API_URL + "?address=" + encodedAddress + "&key=" + apiKey + "&language=ja&region=jp";
+            // Use components=country:JP to restrict results to Japan only
+            String url = API_URL + "?address=" + encodedAddress
+                    + "&key=" + apiKey
+                    + "&language=ja"
+                    + "&region=jp"
+                    + "&components=country:JP";
 
             String response = webClient.get()
                     .uri(url)
@@ -112,6 +152,12 @@ public class GoogleMapsGeocodingService implements GeocodingService {
             double latitude = location.get("lat").asDouble();
             double longitude = location.get("lng").asDouble();
 
+            // Validate coordinates are within Japan bounds
+            if (!isWithinJapanBounds(latitude, longitude)) {
+                System.out.println("[GoogleMaps] Coordinates outside Japan bounds: " + latitude + ", " + longitude);
+                return Optional.empty();
+            }
+
             System.out.println("[GoogleMaps] Found: " + latitude + ", " + longitude);
             return Optional.of(new Coordinates(latitude, longitude));
 
@@ -119,5 +165,10 @@ public class GoogleMapsGeocodingService implements GeocodingService {
             System.err.println("[GoogleMaps] Error parsing response: " + e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private boolean isWithinJapanBounds(double latitude, double longitude) {
+        return latitude >= JAPAN_MIN_LAT && latitude <= JAPAN_MAX_LAT
+                && longitude >= JAPAN_MIN_LNG && longitude <= JAPAN_MAX_LNG;
     }
 }
