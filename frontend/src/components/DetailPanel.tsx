@@ -11,6 +11,41 @@ interface DetailPanelProps {
   onClose: () => void;
 }
 
+const getTimezone = (country: string): string => {
+  switch (country) {
+    case 'JAPAN':
+      return 'Asia/Tokyo';
+    case 'TAIWAN':
+      return 'Asia/Taipei';
+    default:
+      return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  }
+};
+
+const formatDateTime = (dateTimeStr: string, country: string): string => {
+  const timezone = getTimezone(country);
+  const date = new Date(dateTimeStr + getTimezoneOffset(country));
+  return date.toLocaleString('ja-JP', {
+    timeZone: timezone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }) + ` (${timezone.split('/')[1]})`;
+};
+
+const getTimezoneOffset = (country: string): string => {
+  switch (country) {
+    case 'JAPAN':
+      return '+09:00';
+    case 'TAIWAN':
+      return '+08:00';
+    default:
+      return '';
+  }
+};
+
 export function DetailPanel({ event, onClose }: DetailPanelProps) {
   if (!event) return null;
 
@@ -46,17 +81,17 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
                 <Calendar className="h-4 w-4 shrink-0" />
                 <div>
                   <div className="font-medium text-foreground">Start Time</div>
-                  {new Date(event.startTime).toLocaleString()}
+                  {formatDateTime(event.startTime, event.country)}
                 </div>
               </div>
             )}
-            
+
             {event.endTime && (
               <div className="flex items-center gap-3 text-muted-foreground">
                 <Calendar className="h-4 w-4 shrink-0 opacity-0" /> {/* Spacer */}
                 <div>
                   <div className="font-medium text-foreground">End Time</div>
-                  {new Date(event.endTime).toLocaleString()}
+                  {formatDateTime(event.endTime, event.country)}
                 </div>
               </div>
             )}

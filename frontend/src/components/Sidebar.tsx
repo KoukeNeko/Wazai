@@ -11,6 +11,28 @@ import type { WazaiMapItem, SearchParams } from '@/types/api';
 import { getProviders } from '@/services/api';
 import { ModeToggle } from '@/components/mode-toggle';
 
+const getTimezoneOffset = (country: string): string => {
+  switch (country) {
+    case 'JAPAN':
+      return '+09:00';
+    case 'TAIWAN':
+      return '+08:00';
+    default:
+      return '';
+  }
+};
+
+const formatDate = (dateTimeStr: string, country: string): string => {
+  const date = new Date(dateTimeStr + getTimezoneOffset(country));
+  const timezone = country === 'JAPAN' ? 'Asia/Tokyo' : country === 'TAIWAN' ? 'Asia/Taipei' : undefined;
+  return date.toLocaleDateString('ja-JP', { timeZone: timezone });
+};
+
+const parseEventTime = (dateTimeStr: string | undefined, country: string): number => {
+  if (!dateTimeStr) return Number.MAX_SAFE_INTEGER;
+  return new Date(dateTimeStr + getTimezoneOffset(country)).getTime();
+};
+
 interface SidebarProps {
   onSearch: (params: SearchParams) => void;
   results: WazaiMapItem[];
@@ -31,11 +53,9 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
 
   const sortedResults = useMemo(() => {
     return [...results].sort((a, b) => {
-      // If no start time, put at the end for ascending sort, or at the beginning for descending?
-      // Usually items without date should be at the bottom regardless.
-      const dateA = a.startTime ? new Date(a.startTime).getTime() : (sortOrder === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
-      const dateB = b.startTime ? new Date(b.startTime).getTime() : (sortOrder === 'asc' ? Number.MAX_SAFE_INTEGER : 0);
-      
+      const dateA = parseEventTime(a.startTime, a.country);
+      const dateB = parseEventTime(b.startTime, b.country);
+
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
     });
   }, [results, sortOrder]);
@@ -139,7 +159,7 @@ export function Sidebar({ onSearch, results, onSelectEvent, selectedEventId }: S
                     {event.description}
                   </p>
                   <div className="text-xs text-muted-foreground flex gap-2 mt-2">
-                    <span>{event.startTime ? new Date(event.startTime).toLocaleDateString() : 'No Date'}</span>
+                    <span>{event.startTime ? formatDate(event.startTime, event.country) : 'No Date'}</span>
                     <span>•</span>
                     <span>{event.country}</span>
                   </div>

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -85,18 +85,14 @@ public class TechPlayProvider implements ActivityProvider {
             }
 
             TechPlayRss rss = xmlMapper.readValue(rssXml, TechPlayRss.class);
-            System.out.println("[TechPlay] Parsed RSS: " + rss);
             if (rss == null || rss.channel() == null || rss.channel().items() == null) {
-                System.out.println("[TechPlay] RSS or channel or items is null");
                 return Collections.emptyList();
             }
 
-            System.out.println("[TechPlay] Found " + rss.channel().items().size() + " items");
             return transformEvents(rss.channel().items());
 
         } catch (Exception e) {
             System.err.println("[TechPlay] Error fetching events: " + e.getMessage());
-            e.printStackTrace();
             return Collections.emptyList();
         }
     }
@@ -132,32 +128,32 @@ public class TechPlayProvider implements ActivityProvider {
     }
 
     private String buildDescription(TechPlayItem item) {
-        StringBuilder description = new StringBuilder();
-
-        if (item.eventPlace() != null && !item.eventPlace().isBlank()) {
-            description.append(item.eventPlace());
+        if (item.description() != null && !item.description().isBlank()) {
+            String desc = normalizeWhitespace(item.description());
+            return desc.length() > 300 ? desc.substring(0, 300) + "..." : desc;
         }
 
-        if (item.eventAddress() != null && !item.eventAddress().isBlank()) {
-            if (!description.isEmpty()) {
-                description.append(" - ");
-            }
-            description.append(item.eventAddress());
+        // Fallback: build from place/creator if no description
+        StringBuilder fallback = new StringBuilder();
+
+        if (item.eventPlace() != null && !item.eventPlace().isBlank()) {
+            fallback.append(item.eventPlace());
         }
 
         if (item.creator() != null && !item.creator().isBlank()) {
-            if (!description.isEmpty()) {
-                description.append(" / ");
+            if (!fallback.isEmpty()) {
+                fallback.append(" / ");
             }
-            description.append("主催: ").append(item.creator());
+            fallback.append("主催: ").append(item.creator());
         }
 
-        if (description.isEmpty() && item.description() != null) {
-            String desc = item.description();
-            return desc.length() > 200 ? desc.substring(0, 200) + "..." : desc;
-        }
+        return fallback.toString();
+    }
 
-        return description.toString();
+    private String normalizeWhitespace(String text) {
+        return text
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     /**
@@ -211,7 +207,7 @@ public class TechPlayProvider implements ActivityProvider {
     private LocalDateTime parseStartTime(TechPlayItem item) {
         String startTime = item.eventStartTime();
         if (startTime != null && !startTime.isBlank()) {
-            return parseIsoDateTime(startTime);
+            return parseDateTime(startTime);
         }
         return null;
     }
@@ -219,16 +215,19 @@ public class TechPlayProvider implements ActivityProvider {
     private LocalDateTime parseEndTime(TechPlayItem item) {
         String endTime = item.eventEndTime();
         if (endTime != null && !endTime.isBlank()) {
-            return parseIsoDateTime(endTime);
+            return parseDateTime(endTime);
         }
         return null;
     }
 
-    private LocalDateTime parseIsoDateTime(String dateTimeStr) {
+    private LocalDateTime parseDateTime(String dateTimeStr) {
         try {
-            return OffsetDateTime.parse(dateTimeStr).toLocalDateTime();
+            // TechPlay format: "2025-12-09 13:00:00"
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            return LocalDateTime.parse(dateTimeStr, formatter);
         } catch (DateTimeParseException e) {
             try {
+                // Fallback: ISO format
                 return LocalDateTime.parse(dateTimeStr);
             } catch (DateTimeParseException e2) {
                 return null;
