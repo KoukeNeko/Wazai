@@ -13,6 +13,7 @@ public record WazaiPlace(
         String description,
         String url,
         Coordinates coordinates,
+        String address,
         BusinessHours businessHours,
         PlaceType placeType,
         WazaiMapItem.DataSource source,
@@ -28,11 +29,12 @@ public record WazaiPlace(
             String description,
             String url,
             Coordinates coordinates,
+            String address,
             PlaceType placeType,
             WazaiMapItem.DataSource source,
             WazaiMapItem.Country country
     ) {
-        this(id, title, description, url, coordinates, null, placeType, source, country);
+        this(id, title, description, url, coordinates, address, null, placeType, source, country);
     }
 
     /**

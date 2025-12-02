@@ -182,6 +182,7 @@ public class GdgCommunityProvider implements ActivityProvider {
                     extractDescription(gdgEvent),
                     gdgEvent.url(),
                     extractCoordinates(gdgEvent),
+                    extractAddress(gdgEvent),
                     parseStartTime(gdgEvent.startDate()),
                     null,
                     EventType.COMMUNITY_GATHERING,
@@ -191,6 +192,17 @@ public class GdgCommunityProvider implements ActivityProvider {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String extractAddress(GdgEvent event) {
+        if (event.chapter() == null || event.chapter().id() == null) {
+            return null;
+        }
+        GdgChapterInfo chapterInfo = chaptersCache.get(event.chapter().id());
+        if (chapterInfo == null) {
+            return null;
+        }
+        return chapterInfo.title();
     }
 
     private String generateEventId(Long gdgEventId) {

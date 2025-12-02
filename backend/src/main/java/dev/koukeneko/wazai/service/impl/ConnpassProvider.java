@@ -86,11 +86,26 @@ public class ConnpassProvider implements ActivityProvider {
                 extractDescription(event),
                 event.event_url(),
                 Coordinates.tokyo(),  // TODO: Extract from event.address or event.place
+                buildAddress(event),
                 parseStartTime(event.started_at()),
                 EventType.TECH_MEETUP,
                 DataSource.CONNPASS,
                 Country.JAPAN
         );
+    }
+
+    private String buildAddress(ConnpassEvent event) {
+        StringBuilder address = new StringBuilder();
+        if (event.place() != null && !event.place().isBlank()) {
+            address.append(event.place());
+        }
+        if (event.address() != null && !event.address().isBlank()) {
+            if (!address.isEmpty()) {
+                address.append(" / ");
+            }
+            address.append(event.address());
+        }
+        return address.isEmpty() ? null : address.toString();
     }
 
     private String generateActivityId(long eventId) {

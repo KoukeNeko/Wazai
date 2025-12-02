@@ -1,53 +1,60 @@
 package dev.koukeneko.wazai.service.impl;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.koukeneko.wazai.dto.Coordinates;
 import dev.koukeneko.wazai.dto.WazaiEvent;
 import dev.koukeneko.wazai.dto.WazaiEvent.EventType;
 import dev.koukeneko.wazai.dto.WazaiMapItem;
 import dev.koukeneko.wazai.dto.WazaiMapItem.Country;
 import dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
-import dev.koukeneko.wazai.dto.external.techplay.TechPlayItem;
-import dev.koukeneko.wazai.dto.external.techplay.TechPlayRss;
 import dev.koukeneko.wazai.service.ActivityProvider;
+import dev.koukeneko.wazai.service.GeocodingService;
 import dev.koukeneko.wazai.util.SearchHelper;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
  * Provider for TechPlay events.
  *
- * TechPlay is a Japanese IT event aggregation service that provides
- * event information via RSS feed in W3C RSS format.
- *
- * For offline events, coordinates are extracted from the address field
- * using a mapping of Japanese prefectures and major areas.
+ * TechPlay is a Japanese IT event aggregation service.
+ * This provider scrapes the event listing pages to get event URLs,
+ * then fetches JSON-LD structured data from individual event pages.
  */
 @Service
 public class TechPlayProvider implements ActivityProvider {
 
     private static final String PROVIDER_NAME = "TechPlay";
-    private static final String RSS_URL = "https://rss.techplay.jp/event/w3c-rss-format/rss.xml";
+    private static final String EVENT_LIST_URL = "https://techplay.jp/event";
     private static final String ONLINE_INDICATOR = "オンライン";
+    private static final int PAGES_TO_FETCH = 10;
+    private static final int CONNECTION_TIMEOUT_MS = 10000;
 
     private static final Map<String, Coordinates> JAPAN_AREA_COORDINATES = createJapanAreaCoordinates();
 
-    private final WebClient webClient;
-    private final XmlMapper xmlMapper;
+    private final ObjectMapper objectMapper;
+    private final GeocodingService geocodingService;
 
-    public TechPlayProvider(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.build();
-        this.xmlMapper = new XmlMapper();
+    public TechPlayProvider(GeocodingService geocodingService) {
+        this.objectMapper = new ObjectMapper();
+        this.geocodingService = geocodingService;
     }
 
     @Override
@@ -73,166 +80,252 @@ public class TechPlayProvider implements ActivityProvider {
     }
 
     private List<WazaiMapItem> fetchEvents() {
-        try {
-            String rssXml = webClient.get()
-                    .uri(RSS_URL)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            if (rssXml == null || rssXml.isBlank()) {
-                return Collections.emptyList();
-            }
-
-            TechPlayRss rss = xmlMapper.readValue(rssXml, TechPlayRss.class);
-            if (rss == null || rss.channel() == null || rss.channel().items() == null) {
-                return Collections.emptyList();
-            }
-
-            return transformEvents(rss.channel().items());
-
-        } catch (Exception e) {
-            System.err.println("[TechPlay] Error fetching events: " + e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    private List<WazaiMapItem> transformEvents(List<TechPlayItem> items) {
-        return items.stream()
-                .map(this::transformEvent)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
-
-    private WazaiEvent transformEvent(TechPlayItem item) {
-        try {
-            return new WazaiEvent(
-                    generateEventId(item),
-                    item.title(),
-                    buildDescription(item),
-                    item.link(),
-                    extractCoordinates(item),
-                    parseStartTime(item),
-                    parseEndTime(item),
-                    EventType.TECH_MEETUP,
-                    DataSource.TECHPLAY,
-                    Country.JAPAN
-            );
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    private String generateEventId(TechPlayItem item) {
-        return "techplay-" + item.extractEventId();
-    }
-
-    private String buildDescription(TechPlayItem item) {
-        if (item.description() != null && !item.description().isBlank()) {
-            String desc = normalizeWhitespace(item.description());
-            return desc.length() > 300 ? desc.substring(0, 300) + "..." : desc;
-        }
-
-        // Fallback: build from place/creator if no description
-        StringBuilder fallback = new StringBuilder();
-
-        if (item.eventPlace() != null && !item.eventPlace().isBlank()) {
-            fallback.append(item.eventPlace());
-        }
-
-        if (item.creator() != null && !item.creator().isBlank()) {
-            if (!fallback.isEmpty()) {
-                fallback.append(" / ");
-            }
-            fallback.append("主催: ").append(item.creator());
-        }
-
-        return fallback.toString();
-    }
-
-    private String normalizeWhitespace(String text) {
-        return text
-                .replaceAll("\\s+", " ")
-                .trim();
+        List<String> eventUrls = collectEventUrlsFromPages();
+        return fetchEventDetails(eventUrls);
     }
 
     /**
-     * Extracts coordinates from the event address.
-     * Uses a mapping of Japanese prefectures/areas to approximate location.
-     * Returns Tokyo coordinates as default for online events or unknown addresses.
+     * Collects event URLs from multiple listing pages.
      */
-    private Coordinates extractCoordinates(TechPlayItem item) {
-        String address = item.eventAddress();
-        String place = item.eventPlace();
+    private List<String> collectEventUrlsFromPages() {
+        List<String> urls = new ArrayList<>();
 
-        if (isOnlineEvent(place, address)) {
-            return Coordinates.tokyo();
-        }
-
-        String locationText = combineLocationText(address, place);
-        if (locationText.isEmpty()) {
-            return Coordinates.tokyo();
-        }
-
-        for (Map.Entry<String, Coordinates> entry : JAPAN_AREA_COORDINATES.entrySet()) {
-            if (locationText.contains(entry.getKey())) {
-                return entry.getValue();
+        for (int page = 1; page <= PAGES_TO_FETCH; page++) {
+            try {
+                List<String> pageUrls = scrapeEventUrlsFromPage(page);
+                urls.addAll(pageUrls);
+            } catch (IOException e) {
+                System.err.println("[TechPlay] Error fetching page " + page + ": " + e.getMessage());
             }
         }
 
-        return Coordinates.tokyo();
+        return urls;
     }
 
-    private boolean isOnlineEvent(String place, String address) {
-        if (place != null && place.contains(ONLINE_INDICATOR)) {
-            return true;
-        }
-        if (address != null && address.contains(ONLINE_INDICATOR)) {
-            return true;
-        }
-        return (place == null || place.isBlank()) && (address == null || address.isBlank());
+    /**
+     * Scrapes event URLs from a single listing page.
+     */
+    private List<String> scrapeEventUrlsFromPage(int pageNumber) throws IOException {
+        String url = EVENT_LIST_URL + "?page=" + pageNumber;
+
+        Document doc = Jsoup.connect(url)
+                .timeout(CONNECTION_TIMEOUT_MS)
+                .userAgent("Mozilla/5.0 (compatible; WazaiBot/1.0)")
+                .get();
+
+        Elements links = doc.select("a[href^=https://techplay.jp/event/]");
+
+        return links.stream()
+                .map(link -> link.attr("href"))
+                .filter(href -> href.matches("https://techplay.jp/event/\\d+"))
+                .distinct()
+                .collect(Collectors.toList());
     }
 
-    private String combineLocationText(String address, String place) {
-        StringBuilder sb = new StringBuilder();
-        if (address != null && !address.isBlank()) {
-            sb.append(address);
-        }
-        if (place != null && !place.isBlank()) {
-            sb.append(place);
-        }
-        return sb.toString();
+    /**
+     * Fetches event details from individual event pages using JSON-LD.
+     */
+    private List<WazaiMapItem> fetchEventDetails(List<String> eventUrls) {
+        Map<String, WazaiMapItem> eventMap = new ConcurrentHashMap<>();
+
+        eventUrls.parallelStream().forEach(url -> {
+            try {
+                WazaiMapItem event = fetchSingleEventDetail(url);
+                if (event != null) {
+                    eventMap.put(event.id(), event);
+                }
+            } catch (Exception e) {
+                System.err.println("[TechPlay] Error fetching event " + url + ": " + e.getMessage());
+            }
+        });
+
+        return new ArrayList<>(eventMap.values());
     }
 
-    private LocalDateTime parseStartTime(TechPlayItem item) {
-        String startTime = item.eventStartTime();
-        if (startTime != null && !startTime.isBlank()) {
-            return parseDateTime(startTime);
+    /**
+     * Fetches details for a single event from its page using JSON-LD structured data.
+     */
+    private WazaiMapItem fetchSingleEventDetail(String eventUrl) throws IOException {
+        Document doc = Jsoup.connect(eventUrl)
+                .timeout(CONNECTION_TIMEOUT_MS)
+                .userAgent("Mozilla/5.0 (compatible; WazaiBot/1.0)")
+                .get();
+
+        Element jsonLdScript = doc.selectFirst("script[type=application/ld+json]");
+        if (jsonLdScript == null) {
+            return null;
         }
-        return null;
+
+        String jsonLdContent = jsonLdScript.html();
+        JsonNode jsonLd = objectMapper.readTree(jsonLdContent);
+
+        return parseJsonLdEvent(jsonLd, eventUrl);
     }
 
-    private LocalDateTime parseEndTime(TechPlayItem item) {
-        String endTime = item.eventEndTime();
-        if (endTime != null && !endTime.isBlank()) {
-            return parseDateTime(endTime);
+    /**
+     * Parses JSON-LD structured data into a WazaiMapItem.
+     */
+    private WazaiEvent parseJsonLdEvent(JsonNode jsonLd, String eventUrl) {
+        String eventId = extractEventIdFromUrl(eventUrl);
+        String title = getJsonText(jsonLd, "name");
+        String description = getJsonText(jsonLd, "description");
+        LocalDateTime startTime = parseJsonLdDateTime(getJsonText(jsonLd, "startDate"));
+        LocalDateTime endTime = parseJsonLdDateTime(getJsonText(jsonLd, "endDate"));
+        LocationInfo locationInfo = extractLocationInfo(jsonLd);
+
+        if (title == null || title.isBlank()) {
+            return null;
         }
-        return null;
+
+        return new WazaiEvent(
+                "techplay-" + eventId,
+                title,
+                normalizeDescription(description),
+                eventUrl,
+                locationInfo.coordinates(),
+                locationInfo.address(),
+                startTime,
+                endTime,
+                EventType.TECH_MEETUP,
+                DataSource.TECHPLAY,
+                Country.JAPAN
+        );
     }
 
-    private LocalDateTime parseDateTime(String dateTimeStr) {
+    private record LocationInfo(Coordinates coordinates, String address) {}
+
+    private String extractEventIdFromUrl(String url) {
+        String[] parts = url.split("/");
+        return parts[parts.length - 1];
+    }
+
+    private String getJsonText(JsonNode node, String fieldName) {
+        JsonNode field = node.get(fieldName);
+        return field != null && !field.isNull() ? field.asText() : null;
+    }
+
+    private LocalDateTime parseJsonLdDateTime(String dateTimeStr) {
+        if (dateTimeStr == null || dateTimeStr.isBlank()) {
+            return null;
+        }
+
         try {
-            // TechPlay format: "2025-12-09 13:00:00"
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-            return LocalDateTime.parse(dateTimeStr, formatter);
+            ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            return zdt.toLocalDateTime();
         } catch (DateTimeParseException e) {
             try {
-                // Fallback: ISO format
-                return LocalDateTime.parse(dateTimeStr);
+                return LocalDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             } catch (DateTimeParseException e2) {
                 return null;
             }
         }
+    }
+
+    /**
+     * Extracts location info (coordinates and address) from JSON-LD location data.
+     * Priority: address (local mapping + Nominatim) -> venue name (fallback)
+     * Address is prioritized because it's more specific than venue name which can be ambiguous.
+     */
+    private LocationInfo extractLocationInfo(JsonNode jsonLd) {
+        JsonNode location = jsonLd.get("location");
+        if (location == null) {
+            return new LocationInfo(Coordinates.tokyo(), null);
+        }
+
+        // Check for VirtualLocation (online event)
+        String locationType = getJsonText(location, "@type");
+        if ("VirtualLocation".equals(locationType)) {
+            return new LocationInfo(Coordinates.tokyo(), ONLINE_INDICATOR);
+        }
+
+        // Extract venue name and address
+        String venueName = getJsonText(location, "name");
+        String addressText = extractAddressText(location);
+        String displayAddress = buildDisplayAddress(venueName, addressText);
+
+        // Skip geocoding for online events
+        if (venueName != null && venueName.contains(ONLINE_INDICATOR)) {
+            return new LocationInfo(Coordinates.tokyo(), ONLINE_INDICATOR);
+        }
+
+        // First try address-based geocoding (more accurate than venue name)
+        if (addressText != null && !addressText.isBlank()) {
+            Coordinates coords = geocodeAddress(addressText);
+            return new LocationInfo(coords, displayAddress);
+        }
+
+        // Fall back to venue name via Nominatim
+        if (venueName != null && !venueName.isBlank()) {
+            var venueCoords = geocodingService.geocode(venueName);
+            if (venueCoords.isPresent()) {
+                return new LocationInfo(venueCoords.get(), displayAddress);
+            }
+        }
+
+        return new LocationInfo(Coordinates.tokyo(), displayAddress);
+    }
+
+    private String extractAddressText(JsonNode location) {
+        JsonNode address = location.get("address");
+        if (address == null) {
+            return null;
+        }
+
+        String addressText = getJsonText(address, "name");
+        if (addressText == null) {
+            addressText = getJsonText(address, "streetAddress");
+        }
+        if (addressText == null) {
+            addressText = getJsonText(address, "addressLocality");
+        }
+        return addressText;
+    }
+
+    private String buildDisplayAddress(String venueName, String addressText) {
+        if (venueName != null && !venueName.isBlank() && addressText != null && !addressText.isBlank()) {
+            return venueName + " / " + addressText;
+        }
+        if (venueName != null && !venueName.isBlank()) {
+            return venueName;
+        }
+        return addressText;
+    }
+
+    /**
+     * Maps Japanese addresses to coordinates.
+     * First tries local mapping, then falls back to Nominatim geocoding.
+     */
+    private Coordinates geocodeAddress(String address) {
+        if (address == null || address.isBlank()) {
+            return Coordinates.tokyo();
+        }
+
+        if (address.contains(ONLINE_INDICATOR)) {
+            return Coordinates.tokyo();
+        }
+
+        // Try local mapping first (fast, no API call)
+        for (Map.Entry<String, Coordinates> entry : JAPAN_AREA_COORDINATES.entrySet()) {
+            if (address.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
+
+        // Fall back to Nominatim geocoding for unknown addresses
+        return geocodingService.geocode(address)
+                .orElse(Coordinates.tokyo());
+    }
+
+    private String normalizeDescription(String text) {
+        if (text == null) {
+            return "";
+        }
+
+        String normalized = text
+                .replaceAll("\\s+", " ")
+                .trim();
+
+        return normalized.length() > 300 ? normalized.substring(0, 300) + "..." : normalized;
     }
 
     /**

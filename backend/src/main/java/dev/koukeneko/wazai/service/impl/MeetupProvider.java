@@ -115,12 +115,12 @@ public class MeetupProvider implements ActivityProvider {
     private WazaiEvent transformEvent(MeetupEvent event) {
         try {
             Coordinates coords;
-            
+
             if (event.venue() != null && event.venue().lat() != null && event.venue().lon() != null) {
                 coords = new Coordinates(event.venue().lat(), event.venue().lon());
             } else {
                 // Skip events without location coordinates
-                return null; 
+                return null;
             }
 
             return new WazaiEvent(
@@ -129,6 +129,7 @@ public class MeetupProvider implements ActivityProvider {
                     event.shortDescription() != null ? event.shortDescription() : event.group().name(),
                     event.eventUrl(),
                     coords,
+                    buildVenueAddress(event),
                     parseTime(event.dateTime()),
                     null,
                     EventType.TECH_MEETUP,
@@ -138,6 +139,29 @@ public class MeetupProvider implements ActivityProvider {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private String buildVenueAddress(MeetupEvent event) {
+        if (event.venue() == null) {
+            return null;
+        }
+        StringBuilder address = new StringBuilder();
+        if (event.venue().name() != null && !event.venue().name().isBlank()) {
+            address.append(event.venue().name());
+        }
+        if (event.venue().address() != null && !event.venue().address().isBlank()) {
+            if (!address.isEmpty()) {
+                address.append(" / ");
+            }
+            address.append(event.venue().address());
+        }
+        if (event.venue().city() != null && !event.venue().city().isBlank()) {
+            if (!address.isEmpty()) {
+                address.append(", ");
+            }
+            address.append(event.venue().city());
+        }
+        return address.isEmpty() ? null : address.toString();
     }
 
     private java.time.LocalDateTime parseTime(String isoTime) {

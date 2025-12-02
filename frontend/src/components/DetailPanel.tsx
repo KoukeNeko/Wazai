@@ -100,7 +100,16 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
               <MapPin className="h-4 w-4 shrink-0 mt-1" />
               <div>
                 <div className="font-medium text-foreground">Location</div>
-                {`${event.coordinates.latitude}, ${event.coordinates.longitude}`}
+                {event.address ? (
+                  <div className="space-y-1">
+                    <div>{event.address}</div>
+                    <div className="text-xs opacity-60">
+                      {`${event.coordinates.latitude.toFixed(4)}, ${event.coordinates.longitude.toFixed(4)}`}
+                    </div>
+                  </div>
+                ) : (
+                  `${event.coordinates.latitude}, ${event.coordinates.longitude}`
+                )}
               </div>
             </div>
           </div>

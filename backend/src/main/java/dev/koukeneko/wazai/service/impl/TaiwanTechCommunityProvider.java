@@ -73,19 +73,20 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
         String title = (String) raw.get("title");
         String description = (String) raw.get("description");
         String url = (String) raw.get("url");
-        
+        String address = (String) raw.get("address");
+
         Double lat = raw.get("latitude") instanceof Number ? ((Number) raw.get("latitude")).doubleValue() : 0.0;
         Double lon = raw.get("longitude") instanceof Number ? ((Number) raw.get("longitude")).doubleValue() : 0.0;
         Coordinates coordinates = new Coordinates(lat, lon);
 
         String startStr = (String) raw.get("start");
         String endStr = (String) raw.get("end");
-        
+
         LocalDateTime start = startStr != null ? LocalDateTime.parse(startStr) : LocalDateTime.now();
         LocalDateTime end = endStr != null ? LocalDateTime.parse(endStr) : start.plusHours(2);
 
         String typeStr = (String) raw.get("type");
-        EventType type = EventType.CONFERENCE; // Default
+        EventType type = EventType.CONFERENCE;
         if (typeStr != null) {
             try {
                 type = EventType.valueOf(typeStr);
@@ -100,6 +101,7 @@ public class TaiwanTechCommunityProvider implements ActivityProvider {
                 description,
                 url,
                 coordinates,
+                address,
                 start,
                 end,
                 type,

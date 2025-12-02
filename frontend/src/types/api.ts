@@ -29,6 +29,7 @@ export interface WazaiMapItem {
   description: string;
   url: string;
   coordinates: Coordinates;
+  address?: string;
   startTime?: string;
   endTime?: string;
   eventType?: WazaiEventType;

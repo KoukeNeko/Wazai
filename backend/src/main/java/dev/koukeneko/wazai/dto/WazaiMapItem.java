@@ -14,6 +14,7 @@ public sealed interface WazaiMapItem permits WazaiEvent, WazaiPlace {
     String description();
     String url();
     Coordinates coordinates();
+    String address();
     DataSource source();
     Country country();
 

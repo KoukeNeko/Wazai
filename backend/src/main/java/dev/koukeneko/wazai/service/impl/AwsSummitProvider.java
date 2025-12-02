@@ -189,6 +189,7 @@ public class AwsSummitProvider implements ActivityProvider {
                     extractDescription(fields),
                     extractEventUrl(fields),
                     extractCoordinatesFromFields(fields),
+                    extractLocation(fields),
                     parseEventDateTime(fields),
                     null,
                     eventType,
@@ -199,6 +200,23 @@ public class AwsSummitProvider implements ActivityProvider {
             System.err.println("[AWS] Failed to transform event: " + e.getMessage());
             return null;
         }
+    }
+
+    private String extractLocation(AwsAdditionalFields fields) {
+        String location = fields.location();
+        if (location != null && !location.isBlank()) {
+            return location;
+        }
+        // Fallback to extracting city from title
+        String title = fields.title();
+        if (title != null) {
+            for (String city : CITY_COORDINATES.keySet()) {
+                if (title.contains(city)) {
+                    return city;
+                }
+            }
+        }
+        return null;
     }
 
     private String generateEventId(String awsEventId) {
