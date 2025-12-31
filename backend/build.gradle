@@ -20,6 +20,15 @@ configurations {
     }
 }
 
+jar {
+    enabled = false
+    manifest {
+        attributes(
+                'Main-Class': 'dev.koukeneko.backend.BackendApplication'
+        )
+    }
+}
+
 repositories {
     mavenCentral()
 }
