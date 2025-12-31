@@ -1,4 +1,4 @@
-import { X, Calendar, MapPin, ExternalLink, Tag } from 'lucide-react';
+import { X, Calendar, MapPin, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +62,7 @@ export function DetailPanel({ event, onClose }: DetailPanelProps) {
 
       <ScrollArea className="flex-1">
         <CardContent className="space-y-6 py-4">
-          
+
           <div className="flex flex-wrap gap-2">
             <Badge variant="default" className="bg-primary/10 text-primary hover:bg-primary/20 border-none">
               {event.eventType?.replace(/_/g, ' ')}

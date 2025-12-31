@@ -25,6 +25,9 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Install native libraries required by Netty QUIC
+RUN apk add --no-cache libgcc libstdc++
+
 # Create non-root user for security
 RUN addgroup -g 1001 appgroup && \
     adduser -u 1001 -G appgroup -D appuser

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps';
 import type { WazaiMapItem } from '@/types/api';
 import { useTheme } from '@/components/theme-provider';
@@ -119,9 +119,9 @@ const UBER_DARK_STYLE = [
 export function MapComponent({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
   // Default center: Taipei 101
   const defaultCenter = { lat: 25.0330, lng: 121.5654 };
-  
+
   const { theme } = useTheme();
-  
+
   const isDark = useMemo(() => {
     if (theme === 'dark') return true;
     if (theme === 'light') return false;
@@ -139,10 +139,10 @@ export function MapComponent({ events, selectedEvent, onSelectEvent }: MapCompon
           className="w-full h-full"
           styles={isDark ? UBER_DARK_STYLE : []}
         >
-          <Markers 
-            events={events} 
-            selectedEvent={selectedEvent} 
-            onSelectEvent={onSelectEvent} 
+          <Markers
+            events={events}
+            selectedEvent={selectedEvent}
+            onSelectEvent={onSelectEvent}
           />
         </Map>
       </APIProvider>
@@ -161,7 +161,7 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
       lat: selectedEvent.coordinates.latitude,
       lng: selectedEvent.coordinates.longitude,
     });
-    
+
     const currentZoom = map.getZoom();
     if (currentZoom !== undefined && currentZoom < 14) {
       map.setZoom(15);
@@ -181,8 +181,8 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
     if (event.title.toLowerCase().includes('mopcon') || event.id.toLowerCase().includes('mopcon')) {
       return '#060000'; // MOPCON Black
     }
-    if (event.title.toLowerCase().includes('gdg') || event.id.toLowerCase().includes('gdg') || 
-        event.title.toLowerCase().includes('devfest') || event.source === 'GOOGLE_COMMUNITY') {
+    if (event.title.toLowerCase().includes('gdg') || event.id.toLowerCase().includes('gdg') ||
+      event.title.toLowerCase().includes('devfest') || event.source === 'GOOGLE_COMMUNITY') {
       return '#1973E8'; // GDG Blue
     }
     if (event.title.toLowerCase().includes('agile') || event.id.toLowerCase().includes('agile')) {
@@ -205,14 +205,14 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
       {events.map((event) => {
         const isSelected = selectedEvent?.id === event.id;
         const color = getEventColor(event);
-        
+
         return (
           <OverlayMarker
             key={event.id}
             position={{ lat: event.coordinates.latitude, lng: event.coordinates.longitude }}
             zIndex={isSelected ? 100 : 1}
           >
-            <div 
+            <div
               className="relative flex h-4 w-4 items-center justify-center cursor-pointer group"
               onClick={(e) => {
                 e.stopPropagation(); // Prevent map click
@@ -220,13 +220,13 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
               }}
             >
               {/* Ping animation */}
-              <span 
+              <span
                 className="animate-ping-slow absolute inline-flex h-full w-full rounded-full opacity-75"
                 style={{ backgroundColor: color }}
               ></span>
-              
+
               {/* Inner dot */}
-              <span 
+              <span
                 className={`relative inline-flex rounded-full h-3 w-3 border-2 border-white shadow-sm transition-transform duration-300 ${isSelected ? 'scale-150' : 'group-hover:scale-125'}`}
                 style={{ backgroundColor: color }}
               ></span>
