@@ -24,7 +24,8 @@ import static dev.koukeneko.wazai.dto.WazaiMapItem.DataSource;
  * Provider for GDG (Google Developer Groups) Community events.
  *
  * Integrates with the official GDG Community APIs:
- * - /api/chapter_region?chapters=true - Fetches all GDG chapters with coordinates
+ * - /api/chapter_region?chapters=true - Fetches all GDG chapters with
+ * coordinates
  * - /api/search/ - Fetches upcoming events
  *
  * This provider filters for Taiwan (TW) chapters and uses official coordinates
@@ -35,7 +36,7 @@ public class GdgCommunityProvider implements ActivityProvider {
 
     private static final String PROVIDER_NAME = "GDG Community";
     private static final String API_BASE_URL = "https://gdg.community.dev/api";
-    private static final String CHAPTER_REGION_ENDPOINT = "/chapter_region";
+    private static final String CHAPTER_REGION_ENDPOINT = "/chapter_region/";
     private static final String SEARCH_ENDPOINT = "/search/";
     private static final List<String> TARGET_COUNTRY_CODES = List.of("TW", "JP");
     private static final int DEFAULT_PROXIMITY_KM = 10000;
@@ -57,7 +58,7 @@ public class GdgCommunityProvider implements ActivityProvider {
         if (isEmptyKeyword(keyword)) {
             return allEvents;
         }
-        
+
         return allEvents.stream()
                 .filter(item -> SearchHelper.matchesKeyword(item, keyword))
                 .collect(Collectors.toList());
@@ -86,7 +87,8 @@ public class GdgCommunityProvider implements ActivityProvider {
                             .queryParam("chapters", "true")
                             .build())
                     .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<GdgRegion>>() {})
+                    .bodyToMono(new ParameterizedTypeReference<List<GdgRegion>>() {
+                    })
                     .block();
 
             if (regions == null || regions.isEmpty()) {
@@ -187,8 +189,7 @@ public class GdgCommunityProvider implements ActivityProvider {
                     null,
                     EventType.COMMUNITY_GATHERING,
                     DataSource.GOOGLE_COMMUNITY,
-                    determineCountry(gdgEvent)
-            );
+                    determineCountry(gdgEvent));
         } catch (Exception e) {
             return null;
         }
