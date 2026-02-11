@@ -1,5 +1,5 @@
-import { Marker } from 'react-map-gl/maplibre';
-import type { ReactNode } from 'react';
+import { Marker } from "react-map-gl/maplibre";
+import type { ReactNode } from "react";
 
 interface OverlayMarkerProps {
   position: { lat: number; lng: number };
@@ -7,7 +7,11 @@ interface OverlayMarkerProps {
   zIndex?: number;
 }
 
-export function OverlayMarker({ position, children, zIndex = 0 }: OverlayMarkerProps) {
+export function OverlayMarker({
+  position,
+  children,
+  zIndex = 0,
+}: OverlayMarkerProps) {
   return (
     <Marker
       longitude={position.lng}
