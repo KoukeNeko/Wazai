@@ -1,11 +1,13 @@
 package dev.koukeneko.wazai.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.koukeneko.wazai.dto.Coordinates;
 import dev.koukeneko.wazai.dto.WazaiEvent;
 import dev.koukeneko.wazai.dto.WazaiMapItem;
 import dev.koukeneko.wazai.dto.external.gdg.*;
 import dev.koukeneko.wazai.service.ActivityProvider;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -35,18 +37,20 @@ public class GdgCommunityProvider implements ActivityProvider {
 
     private static final String PROVIDER_NAME = "GDG Community";
     private static final String API_BASE_URL = "https://gdg.community.dev/api";
-    private static final String CHAPTER_REGION_ENDPOINT = "/chapter_region";
+    private static final String CHAPTER_REGION_ENDPOINT = "/chapter_region/";
     private static final String SEARCH_ENDPOINT = "/search/";
     private static final List<String> TARGET_COUNTRY_CODES = List.of("TW", "JP");
     private static final int DEFAULT_PROXIMITY_KM = 10000;
 
     private final WebClient webClient;
+    private final ObjectMapper objectMapper;
     private final Map<Long, GdgChapterInfo> chaptersCache = new HashMap<>();
 
-    public GdgCommunityProvider(WebClient.Builder webClientBuilder) {
+    public GdgCommunityProvider(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
         this.webClient = webClientBuilder
                 .baseUrl(API_BASE_URL)
                 .build();
+        this.objectMapper = objectMapper;
         loadTaiwanChapters();
     }
 
@@ -79,15 +83,7 @@ public class GdgCommunityProvider implements ActivityProvider {
     private void loadTaiwanChapters() {
         try {
             System.out.println("[GDG] Loading GDG chapters from API...");
-            List<GdgRegion> regions = webClient
-                    .get()
-                    .uri(uriBuilder -> uriBuilder
-                            .path(CHAPTER_REGION_ENDPOINT)
-                            .queryParam("chapters", "true")
-                            .build())
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<List<GdgRegion>>() {})
-                    .block();
+            List<GdgRegion> regions = fetchRegions();
 
             if (regions == null || regions.isEmpty()) {
                 System.out.println("[GDG] No regions found");
@@ -110,6 +106,25 @@ public class GdgCommunityProvider implements ActivityProvider {
             System.err.println("[GDG] Failed to load chapters: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private List<GdgRegion> fetchRegions() throws Exception {
+        byte[] responseBody = webClient
+                .get()
+                .uri(uriBuilder -> uriBuilder
+                        .path(CHAPTER_REGION_ENDPOINT)
+                        .queryParam("chapters", "true")
+                        .build())
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
+
+        if (responseBody == null || responseBody.length == 0) {
+            return Collections.emptyList();
+        }
+
+        return objectMapper.readValue(responseBody, new TypeReference<List<GdgRegion>>() {});
     }
 
     private void filterAndCacheTaiwanChapters(List<GdgRegion> regions) {
