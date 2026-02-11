@@ -43,14 +43,13 @@ public class GdgCommunityProvider implements ActivityProvider {
     private static final int DEFAULT_PROXIMITY_KM = 10000;
 
     private final WebClient webClient;
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final Map<Long, GdgChapterInfo> chaptersCache = new HashMap<>();
 
-    public GdgCommunityProvider(WebClient.Builder webClientBuilder, ObjectMapper objectMapper) {
+    public GdgCommunityProvider(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder
                 .baseUrl(API_BASE_URL)
                 .build();
-        this.objectMapper = objectMapper;
         loadTaiwanChapters();
     }
 
