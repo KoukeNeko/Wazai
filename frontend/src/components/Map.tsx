@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps';
+import Map, { useMap, MapProvider } from 'react-map-gl/maplibre';
+import 'maplibre-gl/dist/maplibre-gl.css';
 import type { WazaiMapItem } from '@/types/api';
 import { useTheme } from '@/components/theme-provider';
 import { OverlayMarker } from '@/components/OverlayMarker';
@@ -10,116 +11,10 @@ interface MapComponentProps {
   onSelectEvent: (event: WazaiMapItem) => void;
 }
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';
+const DARK_STYLE = 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json';
+const LIGHT_STYLE = 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json';
 
-// Uber-like Dark Style
-const UBER_DARK_STYLE = [
-  {
-    "elementType": "geometry",
-    "stylers": [{ "color": "#212121" }]
-  },
-  {
-    "elementType": "labels.icon",
-    "stylers": [{ "visibility": "off" }]
-  },
-  {
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
-  },
-  {
-    "elementType": "labels.text.stroke",
-    "stylers": [{ "color": "#212121" }]
-  },
-  {
-    "featureType": "administrative",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#757575" }]
-  },
-  {
-    "featureType": "administrative.country",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#9e9e9e" }]
-  },
-  {
-    "featureType": "administrative.land_parcel",
-    "stylers": [{ "visibility": "off" }]
-  },
-  {
-    "featureType": "administrative.locality",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#bdbdbd" }]
-  },
-  {
-    "featureType": "poi",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#181818" }]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#616161" }]
-  },
-  {
-    "featureType": "poi.park",
-    "elementType": "labels.text.stroke",
-    "stylers": [{ "color": "#1b1b1b" }]
-  },
-  {
-    "featureType": "road",
-    "elementType": "geometry.fill",
-    "stylers": [{ "color": "#2c2c2c" }]
-  },
-  {
-    "featureType": "road",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#8a8a8a" }]
-  },
-  {
-    "featureType": "road.arterial",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#373737" }]
-  },
-  {
-    "featureType": "road.highway",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#3c3c3c" }]
-  },
-  {
-    "featureType": "road.highway.controlled_access",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#4e4e4e" }]
-  },
-  {
-    "featureType": "road.local",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#616161" }]
-  },
-  {
-    "featureType": "transit",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#757575" }]
-  },
-  {
-    "featureType": "water",
-    "elementType": "geometry",
-    "stylers": [{ "color": "#000000" }]
-  },
-  {
-    "featureType": "water",
-    "elementType": "labels.text.fill",
-    "stylers": [{ "color": "#3d3d3d" }]
-  }
-] as google.maps.MapTypeStyle[];
-
-export function MapComponent({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
-  // Default center: Taipei 101
-  const defaultCenter = { lat: 25.0330, lng: 121.5654 };
-  
+export function MapComponent(props: MapComponentProps) {
   const { theme } = useTheme();
   
   const isDark = useMemo(() => {
@@ -128,45 +23,43 @@ export function MapComponent({ events, selectedEvent, onSelectEvent }: MapCompon
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   }, [theme]);
 
+  // Default center: Taipei 101
+  const defaultCenter = { lat: 25.0330, lng: 121.5654 };
+
   return (
     <div className="absolute inset-0 z-0">
-      <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+      <MapProvider>
         <Map
-          defaultCenter={defaultCenter}
-          defaultZoom={9}
-          gestureHandling={'greedy'}
-          disableDefaultUI={true}
-          className="w-full h-full"
-          styles={isDark ? UBER_DARK_STYLE : []}
+            id="mainMap"
+            initialViewState={{
+                longitude: defaultCenter.lng,
+                latitude: defaultCenter.lat,
+                zoom: 9
+            }}
+            style={{width: '100%', height: '100%'}}
+            mapStyle={isDark ? DARK_STYLE : LIGHT_STYLE}
+            attributionControl={false}
         >
-          <Markers 
-            events={events} 
-            selectedEvent={selectedEvent} 
-            onSelectEvent={onSelectEvent} 
-          />
+            <Markers {...props} />
         </Map>
-      </APIProvider>
+      </MapProvider>
     </div>
   );
 }
 
-// Separate component to use useMap hook
 function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
-  const map = useMap();
+  const { mainMap } = useMap();
 
   useEffect(() => {
-    if (!map || !selectedEvent) return;
+    if (!mainMap || !selectedEvent) return;
 
-    map.panTo({
-      lat: selectedEvent.coordinates.latitude,
-      lng: selectedEvent.coordinates.longitude,
+    mainMap.flyTo({
+      center: [selectedEvent.coordinates.longitude, selectedEvent.coordinates.latitude],
+      zoom: 15,
+      essential: true
     });
     
-    const currentZoom = map.getZoom();
-    if (currentZoom !== undefined && currentZoom < 14) {
-      map.setZoom(15);
-    }
-  }, [map, selectedEvent]);
+  }, [mainMap, selectedEvent]);
 
   const getEventColor = (event: WazaiMapItem) => {
     if (event.title.toLowerCase().includes('sitcon') || event.id.toLowerCase().includes('sitcon')) {
@@ -215,17 +108,16 @@ function Markers({ events, selectedEvent, onSelectEvent }: MapComponentProps) {
             <div 
               className="relative flex h-4 w-4 items-center justify-center cursor-pointer group"
               onClick={(e) => {
-                e.stopPropagation(); // Prevent map click
+                e.preventDefault(); 
+                e.stopPropagation();
                 onSelectEvent(event);
               }}
             >
-              {/* Ping animation */}
               <span 
                 className="animate-ping-slow absolute inline-flex h-full w-full rounded-full opacity-75"
                 style={{ backgroundColor: color }}
               ></span>
               
-              {/* Inner dot */}
               <span 
                 className={`relative inline-flex rounded-full h-3 w-3 border-2 border-white shadow-sm transition-transform duration-300 ${isSelected ? 'scale-150' : 'group-hover:scale-125'}`}
                 style={{ backgroundColor: color }}
