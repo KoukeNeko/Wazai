@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { APIProvider, Map, useMap } from '@vis.gl/react-google-maps';
 import type { WazaiMapItem } from '@/types/api';
 import { useTheme } from '@/components/theme-provider';

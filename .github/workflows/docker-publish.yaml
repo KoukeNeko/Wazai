@@ -77,8 +77,6 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VITE_GOOGLE_MAPS_API_KEY=${{ secrets.VITE_GOOGLE_MAPS_API_KEY }}
           cache-from: type=gha,scope=${{ matrix.app }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ matrix.app }}-${{ matrix.platform }},mode=max
           outputs: type=image,name=${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true

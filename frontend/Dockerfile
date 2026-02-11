@@ -5,8 +5,6 @@ COPY package.json bun.lock ./
 RUN npm install
 
 COPY . .
-ARG VITE_GOOGLE_MAPS_API_KEY=""
-ENV VITE_GOOGLE_MAPS_API_KEY=${VITE_GOOGLE_MAPS_API_KEY}
 RUN npm run build
 
 FROM nginx:1.27-alpine
