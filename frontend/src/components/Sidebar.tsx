@@ -90,7 +90,7 @@ export function Sidebar({
   };
 
   return (
-    <Card className="absolute left-4 top-4 bottom-4 w-96 z-10 flex flex-col shadow-xl bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-border/40 overflow-hidden">
+    <Card className="absolute left-4 top-4 bottom-4 w-[450px] z-10 flex flex-col shadow-xl bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-border/40 overflow-hidden">
       <CardHeader className="pb-4 flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-xl font-bold flex items-center gap-2">
           <MapPin className="h-6 w-6 text-primary" />
